@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  
+  --color-primary-50: #f0fdf7;
+  --color-primary-100: #dcfce9;
+  --color-primary-500: #22c55e;
+  --color-primary-600: #16a34a;
+
+  --color-background: #000000;
+  --color-surface: #0a0a0a;
+  --color-surface-hover: #171717;
+  --color-border: #262626;
+  
+  --color-text-main: #ededed;
+  --color-text-muted: #a3a3a3;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-text-main font-sans antialiased;
+  }
+}
+
+.card-panel {
+  @apply bg-surface border border-border rounded-xl;
+}
+
+.input-base {
+  @apply bg-surface hover:bg-surface-hover focus:bg-surface border border-border rounded-lg placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-colors;
+}
+
+.btn-primary {
+  @apply bg-text-main text-background hover:bg-gray-200 font-medium px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply bg-surface border border-border text-text-main hover:bg-surface-hover font-medium px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2;
+}
