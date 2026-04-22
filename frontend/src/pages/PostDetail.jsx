@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Bookmark, Heart, MessageCircle, Eye, Loader } from 'lucide-react';
+import { topicSlug } from '../data/topics';
 
 export function PostDetail() {
   const { id } = useParams();
@@ -65,7 +66,9 @@ export function PostDetail() {
         className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-8 xl:gap-12"
       >
         <div className="space-y-6">
-          <div className="micro-label">{post.category}</div>
+          <Link to={`/topics/${topicSlug(post.category)}`} className="micro-label inline-flex w-fit hover:text-accent transition-colors">
+            {post.category}
+          </Link>
           <h1 className="font-display text-4xl md:text-6xl leading-tight text-text-main max-w-3xl">
             {post.title}
           </h1>

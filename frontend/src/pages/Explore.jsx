@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PostCard } from '../components/post/PostCard';
-import { Compass, Loader, ArrowRight, Sparkles, Layers3, ChevronRight } from 'lucide-react';
+import { Compass, Loader, Sparkles, Layers3, ChevronRight } from 'lucide-react';
+import { TOPICS } from '../data/topics';
 
 export function Explore() {
   const [posts, setPosts] = useState([]);
@@ -62,48 +64,60 @@ export function Explore() {
   const previewPosts = posts.slice(0, 3);
 
   return (
-    <div className="mt-4 md:mt-6 pb-8">
-      <motion.div
+    <div className="mt-4 md:mt-6 pb-8 space-y-8">
+      <motion.section
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="mb-8 relative"
+        className="grid grid-cols-1 xl:grid-cols-[0.95fr_1.05fr] gap-6 items-start"
       >
-        <div className="grid grid-cols-1 xl:grid-cols-[1.25fr_0.75fr] gap-6 items-start">
-          <motion.div variants={itemVariants} className="card-panel depth-layer-3 p-6 md:p-8 relative overflow-visible">
-            <div className="signature-badge top-left">All Posts</div>
-            <div className="micro-label mb-4">🔍 Discover</div>
-            <h1 className="font-display text-4xl md:text-6xl font-semibold text-text-main leading-tight max-w-3xl">
-              Explore stories without the blank page drama.
-            </h1>
-            <p className="mt-4 text-base md:text-lg text-text-muted max-w-2xl leading-relaxed">
-              This page uses a tighter stack, smaller top section, and more cards immediately in view.
-            </p>
+        <motion.div variants={itemVariants} className="card-panel depth-layer-3 p-6 md:p-8 relative overflow-visible">
+          <div className="signature-badge top-left">All Posts</div>
+          <div className="micro-label mb-4">🔍 Discover</div>
+          <h1 className="font-display text-4xl md:text-5xl font-semibold text-text-main leading-tight max-w-3xl">
+            Explore stories without the blank page drama.
+          </h1>
+          <p className="mt-4 text-base md:text-lg text-text-muted max-w-2xl leading-relaxed">
+            The browse view now starts with content immediately, then opens into a full card grid instead of a tall empty stack.
+          </p>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Chip label={`${posts.length} stories`} icon={<Sparkles className="w-3.5 h-3.5" />} />
-              <Chip label="Layered feed" icon={<Layers3 className="w-3.5 h-3.5" />} />
-              <Chip label="Scroll down" icon={<ChevronRight className="w-3.5 h-3.5" />} />
-            </div>
-          </motion.div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Chip label={`${posts.length} stories`} icon={<Sparkles className="w-3.5 h-3.5" />} />
+            <Chip label="Card grid" icon={<Layers3 className="w-3.5 h-3.5" />} />
+            <Chip label="Topic filters" icon={<ChevronRight className="w-3.5 h-3.5" />} />
+          </div>
+        </motion.div>
 
-          <motion.aside variants={itemVariants} className="card-panel depth-layer-2 p-5 md:p-6 tilt-neg-1 space-y-4">
-            <div className="micro-label mb-1">Quick preview</div>
-            <p className="text-xl font-display font-semibold text-text-main leading-snug">A short rail keeps the page feeling active.</p>
-            <div className="space-y-3">
-              {previewPosts.map((post, index) => (
-                <div key={post.id} className="flex items-center gap-3 rounded-2xl bg-surface-secondary/65 p-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-accent text-xs font-bold">0{index + 1}</div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-text-main line-clamp-1">{post.title}</p>
-                    <p className="text-xs text-text-muted">{post.category}</p>
-                  </div>
+        <motion.aside variants={itemVariants} className="card-panel depth-layer-2 p-5 md:p-6 space-y-4">
+          <div className="micro-label mb-1">Quick filters</div>
+          <p className="text-xl font-display font-semibold text-text-main leading-snug">Jump to one topic or sample a few recent posts.</p>
+
+          <div className="grid grid-cols-2 gap-2">
+            {TOPICS.map((topic) => (
+              <Link
+                key={topic.slug}
+                to={`/topics/${topic.slug}`}
+                className="rounded-2xl border border-border bg-surface-secondary/70 px-3 py-3 text-sm font-semibold text-text-main hover:text-accent hover:border-accent/40 transition-colors"
+              >
+                <span className="block uppercase tracking-[0.14em] text-[11px] text-text-subtle mb-1">{topic.label}</span>
+                <span className="line-clamp-2 text-xs font-normal text-text-muted">{topic.description}</span>
+              </Link>
+            ))}
+          </div>
+
+          <div className="space-y-3 pt-2">
+            {previewPosts.map((post, index) => (
+              <div key={post.id} className="flex items-center gap-3 rounded-2xl bg-surface-secondary/65 p-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-accent text-xs font-bold">0{index + 1}</div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-text-main line-clamp-1">{post.title}</p>
+                  <p className="text-xs text-text-muted">{post.category}</p>
                 </div>
-              ))}
-            </div>
-          </motion.aside>
-        </div>
-      </motion.div>
+              </div>
+            ))}
+          </div>
+        </motion.aside>
+      </motion.section>
 
       <div className="divider-playful my-8 md:my-10" />
 
@@ -124,41 +138,22 @@ export function Explore() {
         >
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <div className="micro-label mb-2">Stacked list</div>
-              <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-main">All stories, now in view</h2>
+              <div className="micro-label mb-2">All stories</div>
+              <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-main">A denser card wall, no empty lead-in</h2>
             </div>
-            <p className="text-text-muted max-w-xl">A denser feed makes the page feel curated instead of empty.</p>
+            <p className="text-text-muted max-w-xl">The feed starts immediately and uses a responsive grid so 25 posts feel intentional instead of stacked oddly.</p>
           </div>
 
-          <div className="space-y-4 cards-overlap">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {posts.map((post, i) => (
               <motion.div
                 key={post.id}
                 variants={itemVariants}
                 initial="hidden"
                 animate="visible"
-                className={`${i % 2 === 0 ? 'offset-left' : 'offset-right'} relative`}
-                style={{ '--z-index': posts.length - i }}
+                className={i === 0 ? 'md:col-span-2 xl:col-span-2' : ''}
               >
-                <div className={`grid grid-cols-1 xl:grid-cols-[0.9fr_1.1fr] gap-4 items-start ${i % 2 === 0 ? '' : 'xl:[grid-template-columns:1.1fr_0.9fr]'}`}>
-                  <div className={i % 2 === 0 ? 'tilt-neg-1' : 'tilt-pos-1'}>
-                    <PostCard post={post} index={i} compact />
-                  </div>
-                  <div className="card-panel depth-layer-1 p-5 md:p-6 space-y-3">
-                    <div className="micro-label">Explore note</div>
-                    <p className="text-xl font-display font-semibold text-text-main leading-tight">
-                      {post.title}
-                    </p>
-                    <p className="text-text-muted leading-relaxed line-clamp-4">
-                      {post.description}
-                    </p>
-                    <div className="organic-line my-2" />
-                    <div className="flex items-center justify-between text-sm text-text-muted">
-                      <span>{post.author}</span>
-                      <span>{post.category}</span>
-                    </div>
-                  </div>
-                </div>
+                <PostCard post={post} index={i} featured={i === 0} />
               </motion.div>
             ))}
           </div>

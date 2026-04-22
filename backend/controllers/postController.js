@@ -210,15 +210,6 @@ const DUMMY_POST_BLUEPRINTS = [
     comments: 99,
   },
   {
-    title: 'Type Systems for Content-Heavy Products',
-    description: 'Build a typographic rhythm that can survive dense editorial layouts.',
-    author: 'Mina Patel',
-    category: 'Design',
-    tags: ['Typography', 'Content', 'Editorial'],
-    likes: 592,
-    comments: 76,
-  },
-  {
     title: 'Testing React Apps Without Slowing Down',
     description: 'A practical test stack that keeps feedback fast and confidence high.',
     author: 'Noah Evans',
