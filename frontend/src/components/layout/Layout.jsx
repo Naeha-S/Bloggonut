@@ -11,7 +11,7 @@ export function Layout({ children }) {
       
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto w-full">
         <Navbar toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
-        <main className="flex-1 px-4 lg:px-8 pb-12 w-full max-w-7xl mx-auto">
+        <main className="flex-1 px-4 lg:px-10 pb-16 w-full max-w-none">
           {children}
         </main>
       </div>
