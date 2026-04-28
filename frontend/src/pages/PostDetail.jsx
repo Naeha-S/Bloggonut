@@ -1,14 +1,36 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Bookmark, Heart, MessageCircle, Eye, Loader } from 'lucide-react';
 import { topicSlug } from '../data/topics';
+import { CommentsSection } from '../components/CommentsSection';
+
 
 export function PostDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const user = JSON.parse(localStorage.getItem('bms_user') || 'null');
+  const token = localStorage.getItem('bms_token');
+
+  const handleDeletePost = async () => {
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+    try {
+      const response = await fetch(`http://localhost:5000/api/posts/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to delete post');
+      navigate('/');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -98,7 +120,11 @@ export function PostDetail() {
               {post.content}
             </p>
           </div>
+
+          {/* Comments Section */}
+          <CommentsSection postId={post.id} />
         </div>
+
 
         <div className="space-y-6 xl:sticky xl:top-28 self-start">
           {post.image && (
@@ -108,17 +134,26 @@ export function PostDetail() {
           )}
 
           <div className="card-panel p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <img
-                src={`https://api.dicebear.com/7.x/notionists/svg?seed=${post.author}&backgroundColor=transparent`}
-                alt={post.author}
-                className="w-14 h-14 rounded-full border-2 border-border bg-surface-secondary"
-              />
-              <div>
-                <p className="text-sm text-text-muted">Written by</p>
-                <p className="font-semibold text-text-main">{post.author}</p>
-                <p className="text-xs text-text-subtle">{new Date(post.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img
+                  src={`https://api.dicebear.com/7.x/notionists/svg?seed=${post.author}&backgroundColor=transparent`}
+                  alt={post.author}
+                  className="w-14 h-14 rounded-full border-2 border-border bg-surface-secondary"
+                />
+                <div>
+                  <p className="text-sm text-text-muted">Written by</p>
+                  <p className="font-semibold text-text-main">{post.author}</p>
+                  <p className="text-xs text-text-subtle">{new Date(post.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                </div>
               </div>
+              
+              {user && post.author_id === user.id && (
+                <div className="flex flex-col gap-2 text-right">
+                  <Link to={`/edit/${id}`} className="text-sm font-medium text-accent hover:underline">Edit</Link>
+                  <button onClick={handleDeletePost} className="text-sm font-medium text-red-500 hover:underline">Delete</button>
+                </div>
+              )}
             </div>
 
             <Link to="/write" className="btn-primary btn-tactile w-full">
