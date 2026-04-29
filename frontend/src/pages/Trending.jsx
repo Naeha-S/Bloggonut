@@ -1,9 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PostCard } from '../components/post/PostCard';
-import { Flame, Loader, Sparkles, Layers3, ChevronRight } from 'lucide-react';
+import { Flame, TrendingUp, ArrowRight } from 'lucide-react';
 import { TOPICS } from '../data/topics';
+import { Link } from 'react-router-dom';
+
+const container = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.06 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] } },
+};
+
+function EditorLoader() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[55vh] gap-4">
+      <div className="editor-loader" />
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-subtle)', letterSpacing: '0.08em' }}>
+        loading stories…
+      </p>
+    </div>
+  );
+}
 
 export function Trending() {
   const [posts, setPosts] = useState([]);
@@ -11,182 +31,178 @@ export function Trending() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/posts');
-        if (!response.ok) throw new Error('Failed to fetch posts');
-        const data = await response.json();
-        console.log('[Trending] posts received:', Array.isArray(data) ? data.length : 0, data);
-        // Sort by likes to show trending posts
-        const sorted = [...data].sort((a, b) => (b.likes || 0) - (a.likes || 0));
-        console.log('[Trending] sorted preview:', sorted.slice(0, 8).map((post) => ({ id: post.id, title: post.title, likes: post.likes })));
-        setPosts(sorted);
-      } catch (err) {
-        console.error('[Trending] fetch error:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPosts();
+    fetch('http://localhost:5000/api/posts')
+      .then((r) => { if (!r.ok) throw new Error('Failed to fetch'); return r.json(); })
+      .then((data) => setPosts([...data].sort((a, b) => (b.likes || 0) - (a.likes || 0))))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-        >
-          <Loader className="w-8 h-8 text-accent" />
-        </motion.div>
-      </div>
-    );
-  }
+  if (loading) return <EditorLoader />;
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] },
-    },
-  };
-
-  const previewPosts = posts.slice(0, 3);
+  const [hero, ...rest] = posts;
+  const topThree = posts.slice(0, 3);
 
   return (
-    <div className="mt-4 md:mt-6 pb-8 space-y-8">
-      <motion.section
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-1 xl:grid-cols-[0.95fr_1.05fr] gap-6 items-start"
+    <div>
+      {/* ── Masthead ── */}
+      <motion.header
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.65 }}
+        style={{ marginBottom: '2.75rem' }}
       >
-        <motion.div variants={itemVariants} className="card-panel depth-layer-3 p-6 md:p-8 relative overflow-visible">
-          <div className="signature-badge top-left">Trending</div>
-          <div className="micro-label mb-4">🔥 On Fire</div>
-          <h1 className="font-display text-4xl md:text-5xl font-semibold text-text-main leading-tight max-w-3xl">
-            Trending stories, now in a proper grid.
-          </h1>
-          <p className="mt-4 text-base md:text-lg text-text-muted max-w-2xl leading-relaxed">
-            The page stays compact at the top and puts the highest-engagement posts into a responsive card wall below.
-          </p>
+        <div className="flex items-center gap-3 mb-4">
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 500, color: 'var(--color-gold)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            // Trending now
+          </span>
+          <div className="accent-line" style={{ flex: 1 }} />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: 'var(--color-subtle)' }}>
+            sorted by engagement
+          </span>
+        </div>
+        <h1
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)',
+            fontWeight: 400,
+            color: 'var(--color-charcoal)',
+            letterSpacing: '-0.035em',
+            lineHeight: 1.1,
+            marginBottom: '1rem',
+          }}
+        >
+          What people are<br />
+          <em style={{ fontStyle: 'italic', opacity: 0.65 }}>reading right now.</em>
+        </h1>
+        <p style={{ fontSize: '0.95rem', color: 'var(--color-muted)', lineHeight: 1.65, maxWidth: '440px' }}>
+          Ranked by likes and engagement. The pieces resonating most with readers today.
+        </p>
+      </motion.header>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Chip label={`${posts.length} stories`} icon={<Sparkles className="w-3.5 h-3.5" />} />
-            <Chip label="Sorted by likes" icon={<Flame className="w-3.5 h-3.5" />} />
-            <Chip label="Card grid" icon={<Layers3 className="w-3.5 h-3.5" />} />
+      {/* ── Podium — top 3 ── */}
+      {!error && topThree.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          style={{
+            background: 'var(--color-warm-white)',
+            borderRadius: '1.25rem',
+            padding: '1.25rem 1.5rem',
+            marginBottom: '2.5rem',
+            boxShadow: 'var(--shadow-soft)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: '0.5rem', flexShrink: 0 }}>
+            <TrendingUp style={{ width: 14, height: 14, color: 'var(--color-gold)' }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--color-gold)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              Top right now
+            </span>
           </div>
-        </motion.div>
 
-        <motion.aside variants={itemVariants} className="card-panel depth-layer-2 p-5 md:p-6 space-y-4">
-          <div className="micro-label mb-1">Momentum rail</div>
-          <p className="text-xl font-display font-semibold text-text-main leading-snug">Jump across the hottest lanes or inspect the top three stories.</p>
-
-          <div className="grid grid-cols-2 gap-2">
-            {TOPICS.map((topic) => (
+          <div
+            style={{
+              flex: 1,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: '0',
+              borderLeft: '1px solid var(--color-border-light)',
+              paddingLeft: '1rem',
+            }}
+          >
+            {topThree.map((post, i) => (
               <Link
-                key={topic.slug}
-                to={`/topics/${topic.slug}`}
-                className="rounded-2xl border border-border bg-surface-secondary/70 px-3 py-3 text-sm font-semibold text-text-main hover:text-accent hover:border-accent/40 transition-colors"
+                key={post.id}
+                to={`/post/${post.id}`}
+                className="flex items-center gap-3 py-2 group"
+                style={{
+                  textDecoration: 'none',
+                  borderRight: i < topThree.length - 1 ? '1px solid var(--color-border-light)' : 'none',
+                  paddingRight: '1rem',
+                  paddingLeft: i > 0 ? '1rem' : 0,
+                }}
               >
-                <span className="block uppercase tracking-[0.14em] text-[11px] text-text-subtle mb-1">{topic.label}</span>
-                <span className="line-clamp-2 text-xs font-normal text-text-muted">{topic.description}</span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '1.5rem',
+                    fontWeight: 400,
+                    color: i === 0 ? 'var(--color-gold)' : 'var(--color-border)',
+                    lineHeight: 1,
+                    minWidth: '2rem',
+                  }}
+                >
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <div className="min-w-0">
+                  <p
+                    style={{
+                      fontSize: '0.8rem',
+                      fontWeight: 500,
+                      color: 'var(--color-charcoal)',
+                      lineHeight: 1.3,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      transition: 'color 0.2s',
+                    }}
+                    className="group-hover:text-[color:var(--color-gold)]"
+                  >
+                    {post.title}
+                  </p>
+                  <p style={{ fontSize: '0.65rem', color: 'var(--color-subtle)', fontFamily: 'var(--font-mono)', marginTop: '0.2rem' }}>
+                    {post.likes || 0} likes
+                  </p>
+                </div>
               </Link>
             ))}
           </div>
-
-          <div className="space-y-3 pt-2">
-            {previewPosts.map((post, index) => (
-              <div key={post.id} className="flex items-center gap-3 rounded-2xl bg-surface-secondary/65 p-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-accent text-xs font-bold">0{index + 1}</div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-text-main line-clamp-1">{post.title}</p>
-                  <p className="text-xs text-text-muted">{post.likes || 0} likes</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.aside>
-      </motion.section>
-
-      <div className="divider-playful my-8 md:my-10" />
-
-      {error ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="p-12 rounded-3xl bg-surface border border-border text-text-muted text-center shadow-soft"
-        >
-          <p className="text-base">{error}</p>
         </motion.div>
-      ) : (
-        <motion.section
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="space-y-5"
-        >
-          <div className="flex items-end justify-between gap-4 flex-wrap">
-            <div>
-              <div className="micro-label mb-2">Trending stories</div>
-              <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-main">What people are reading right now</h2>
-            </div>
-            <p className="text-text-muted max-w-xl">The page stays dense and scannable, without the stacked rail that was leaving a weird gap at the top.</p>
-          </div>
+      )}
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {posts.map((post, i) => (
-              <motion.div
-                key={post.id}
-                variants={itemVariants}
-                initial="hidden"
-                animate="visible"
-                className={i === 0 ? 'md:col-span-2 xl:col-span-2' : ''}
-              >
-                <PostCard post={post} index={i} featured={i === 0} />
+      {/* ── Error ── */}
+      {error && (
+        <div style={{ padding: '2rem', background: 'var(--color-warm-white)', borderRadius: '1rem', color: 'var(--color-muted)', textAlign: 'center' }}>
+          {error}
+        </div>
+      )}
+
+      {/* ── Empty ── */}
+      {!error && posts.length === 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', paddingTop: '5rem' }}>
+          <Flame style={{ width: 48, height: 48, color: 'var(--color-border)', margin: '0 auto 1rem' }} />
+          <p style={{ color: 'var(--color-muted)' }}>No trending stories yet.</p>
+        </motion.div>
+      )}
+
+      {/* ── Cards ── */}
+      {!error && posts.length > 0 && (
+        <motion.div variants={container} initial="hidden" animate="visible">
+          {hero && (
+            <motion.div variants={item} style={{ marginBottom: '1.5rem' }}>
+              <PostCard post={hero} index={0} featured />
+            </motion.div>
+          )}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '1.25rem',
+            }}
+          >
+            {rest.map((post, i) => (
+              <motion.div key={post.id} variants={item}>
+                <PostCard post={post} index={i + 1} />
               </motion.div>
             ))}
           </div>
-        </motion.section>
-      )}
-
-      {!error && posts.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-20"
-        >
-          <motion.div
-            animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <Flame className="w-16 h-16 text-text-subtle/30 mx-auto mb-4" />
-          </motion.div>
-          <p className="text-text-muted text-lg">No trending stories yet.</p>
         </motion.div>
       )}
-    </div>
-  );
-}
-
-function Chip({ label, icon }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text-main shadow-soft">
-      <span className="text-accent">{icon}</span>
-      <span>{label}</span>
     </div>
   );
 }

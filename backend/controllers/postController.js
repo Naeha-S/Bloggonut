@@ -293,6 +293,16 @@ export const getPostById = async (req, res) => {
   try {
     const { id } = req.params;
     console.log('[posts:getPostById] requested id:', id);
+
+    // Check if ID is a UUID. If not, it's definitely a dummy post.
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+
+    if (!isUuid) {
+      const post = DUMMY_POSTS.find(p => p.id == id);
+      console.log('[posts:getPostById] non-UUID, dummy match:', Boolean(post));
+      return post ? res.status(200).json(post) : res.status(404).json({ error: 'Post not found' });
+    }
+
     const { data, error } = await supabase.from('posts').select('*').eq('id', id).single();
 
     if (error && error.code === '42P01') {
@@ -304,6 +314,12 @@ export const getPostById = async (req, res) => {
     if (error && error.code === 'PGRST116') {
       const post = DUMMY_POSTS.find(p => p.id == id);
       console.log('[posts:getPostById] no db match, dummy match:', Boolean(post));
+      return post ? res.status(200).json(post) : res.status(404).json({ error: 'Post not found' });
+    }
+
+    // Handle invalid UUID error from Postgres
+    if (error && error.code === '22P02') {
+      const post = DUMMY_POSTS.find(p => p.id == id);
       return post ? res.status(200).json(post) : res.status(404).json({ error: 'Post not found' });
     }
 

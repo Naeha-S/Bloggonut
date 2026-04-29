@@ -1,9 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader, ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { PostCard } from '../components/post/PostCard';
 import { TOPICS, getTopic, topicSlug } from '../data/topics';
+
+const container = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.06 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] } },
+};
 
 export function TopicPage() {
   const { topic: topicParam } = useParams();
@@ -13,67 +22,45 @@ export function TopicPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/posts');
-        if (!response.ok) throw new Error('Failed to fetch posts');
-        const data = await response.json();
-        setPosts(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPosts();
+    fetch('http://localhost:5000/api/posts')
+      .then((r) => { if (!r.ok) throw new Error('Failed to fetch'); return r.json(); })
+      .then((data) => setPosts(Array.isArray(data) ? data : []))
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
   const filteredPosts = useMemo(() => {
-    if (!topic) {
-      return [];
-    }
-
-    return posts.filter((post) => topicSlug(post.category) === topic.slug);
+    if (!topic) return [];
+    return posts.filter((p) => topicSlug(p.category) === topic.slug);
   }, [posts, topic]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-        >
-          <Loader className="w-8 h-8 text-accent" />
-        </motion.div>
+      <div className="flex flex-col items-center justify-center min-h-[55vh] gap-4">
+        <div className="editor-loader" />
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-subtle)', letterSpacing: '0.08em' }}>
+          loading stories…
+        </p>
       </div>
     );
   }
 
+  /* Unknown topic */
   if (!topic) {
     return (
-      <div className="mt-6 md:mt-10 space-y-6">
-        <Link to="/explore" className="inline-flex items-center gap-2 text-text-muted hover:text-accent transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Back to explore
+      <div>
+        <Link to="/explore" className="flex items-center gap-1.5" style={{ color: 'var(--color-subtle)', textDecoration: 'none', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', marginBottom: '2rem', display: 'inline-flex' }}>
+          <ArrowLeft style={{ width: 13, height: 13 }} />
+          back to explore
         </Link>
-
-        <div className="card-panel p-8 md:p-10 shadow-soft border border-border">
-          <div className="signature-badge top-left">Topics</div>
-          <h1 className="font-display text-4xl md:text-5xl font-semibold text-text-main">That topic does not exist.</h1>
-          <p className="mt-4 text-text-muted max-w-2xl">
-            Pick one of the six supported topic areas below to open only the related stories.
-          </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            {TOPICS.map((item) => (
-              <Link
-                key={item.slug}
-                to={`/topics/${item.slug}`}
-                className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text-main hover:text-accent hover:border-accent/40 transition-colors"
-              >
-                {item.label}
-              </Link>
+        <div style={{ background: 'var(--color-warm-white)', borderRadius: '1.25rem', padding: '2.5rem', boxShadow: 'var(--shadow-soft)' }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, color: 'var(--color-charcoal)', marginBottom: '1rem' }}>
+            Topic not found.
+          </h1>
+          <p style={{ color: 'var(--color-muted)', marginBottom: '1.5rem' }}>Browse one of the supported topics:</p>
+          <div className="flex flex-wrap gap-2">
+            {TOPICS.map((t) => (
+              <Link key={t.slug} to={`/topics/${t.slug}`} className="tag-chip" style={{ fontSize: '0.7rem' }}>{t.label}</Link>
             ))}
           </div>
         </div>
@@ -81,96 +68,96 @@ export function TopicPage() {
     );
   }
 
+  const [hero, ...rest] = filteredPosts;
+
   return (
-    <div className="mt-4 md:mt-6 pb-8 space-y-8">
-      <Link to="/explore" className="inline-flex items-center gap-2 text-text-muted hover:text-accent transition-colors">
-        <ArrowLeft className="w-4 h-4" />
-        Back to explore
-      </Link>
+    <div>
+      {/* Back */}
+      <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} style={{ marginBottom: '2rem' }}>
+        <Link to="/explore" className="flex items-center gap-1.5" style={{ color: 'var(--color-subtle)', textDecoration: 'none', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', display: 'inline-flex' }}>
+          <ArrowLeft style={{ width: 13, height: 13 }} />
+          back to explore
+        </Link>
+      </motion.div>
 
-      <section className="grid grid-cols-1 xl:grid-cols-[0.95fr_1.05fr] gap-6 items-start">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card-panel depth-layer-3 p-6 md:p-8 relative overflow-hidden"
-        >
-          <div className="signature-badge top-left">Topic feed</div>
-          <div className="micro-label mb-4">Filtered stories</div>
-          <h1 className="font-display text-4xl md:text-6xl font-semibold text-text-main leading-tight max-w-3xl">
-            {topic.label} stories, no extra noise.
+      {/* Topic hero with cover image */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+        style={{
+          position: 'relative',
+          borderRadius: '1.5rem',
+          overflow: 'hidden',
+          height: '240px',
+          marginBottom: '2.5rem',
+          boxShadow: 'var(--shadow-medium)',
+        }}
+      >
+        <img src={topic.image} alt={topic.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to right, rgba(28,25,23,0.8) 0%, rgba(28,25,23,0.3) 70%, transparent 100%)',
+        }} />
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '2rem 2.5rem' }}>
+          <span className="category-pill" style={{ marginBottom: '0.75rem', width: 'fit-content' }}>{topic.label}</span>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 3.5vw, 2.75rem)', fontWeight: 400, color: '#FDFAF5', letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: '0.5rem' }}>
+            {topic.label} stories
           </h1>
-          <p className="mt-4 text-base md:text-lg text-text-muted max-w-2xl leading-relaxed">
-            Only the posts tagged with {topic.label} appear here, and every card keeps the same topic image so the page reads as one lane.
+          <p style={{ fontSize: '0.9rem', color: 'rgba(253,250,245,0.7)', maxWidth: '400px', lineHeight: 1.55 }}>
+            {topic.description}
           </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Chip label={`${filteredPosts.length} stories`} />
-            <Chip label={topic.description} />
-          </div>
-        </motion.div>
-
-        <motion.aside
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card-panel depth-layer-2 overflow-hidden"
-        >
-          <div className="relative h-64 sm:h-72">
-            <img src={topic.image} alt={topic.label} className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-text-main/70 via-text-main/20 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-              <div className="micro-label text-white/80">Related topic</div>
-              <p className="mt-2 text-2xl font-display font-semibold leading-tight">{topic.label}</p>
-            </div>
-          </div>
-          <div className="p-5 md:p-6 space-y-3">
-            <p className="text-text-muted leading-relaxed">Explore the rest of the {topic.label.toLowerCase()} lane using the chips or jump back to the full browse view.</p>
-            <div className="flex flex-wrap gap-2">
-              {TOPICS.map((item) => (
-                <Link
-                  key={item.slug}
-                  to={`/topics/${item.slug}`}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors ${item.slug === topic.slug ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-surface text-text-muted hover:text-accent hover:border-accent/40'}`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </motion.aside>
-      </section>
-
-      <section className="space-y-5">
-        <div className="flex items-end justify-between gap-4 flex-wrap">
-          <div>
-            <div className="micro-label mb-2">Topic stories</div>
-            <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-main">Related posts only</h2>
-          </div>
-          <p className="text-text-muted max-w-xl">This page stays focused on one topic so it behaves like a small editorial shelf instead of a generic feed.</p>
+          <p style={{ marginTop: '0.75rem', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'rgba(253,250,245,0.5)', letterSpacing: '0.08em' }}>
+            {filteredPosts.length} {filteredPosts.length === 1 ? 'story' : 'stories'} found
+          </p>
         </div>
+      </motion.div>
 
-        {error ? (
-          <div className="card-panel p-8 text-text-muted">{error}</div>
-        ) : filteredPosts.length === 0 ? (
-          <div className="card-panel p-8 text-text-muted">No stories found for this topic yet.</div>
-        ) : (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {filteredPosts.map((post, index) => (
-              <div key={post.id} className={index === 0 ? 'md:col-span-2 xl:col-span-2' : ''}>
-                <PostCard post={post} index={index} featured={index === 0} />
-              </div>
+      {/* Other topics switcher */}
+      <div className="flex flex-wrap gap-1.5" style={{ marginBottom: '2.5rem' }}>
+        {TOPICS.map((t) => (
+          <Link
+            key={t.slug}
+            to={`/topics/${t.slug}`}
+            className={`tag-chip ${t.slug === topic.slug ? 'active' : ''}`}
+            style={{ fontSize: '0.65rem' }}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div style={{ padding: '2rem', background: 'var(--color-warm-white)', borderRadius: '1rem', color: 'var(--color-muted)' }}>
+          {error}
+        </div>
+      )}
+
+      {/* Empty */}
+      {!error && filteredPosts.length === 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', paddingTop: '4rem' }}>
+          <p style={{ color: 'var(--color-muted)' }}>No stories in this topic yet.</p>
+        </motion.div>
+      )}
+
+      {/* Cards */}
+      {!error && filteredPosts.length > 0 && (
+        <motion.div variants={container} initial="hidden" animate="visible">
+          {hero && (
+            <motion.div variants={item} style={{ marginBottom: '1.5rem' }}>
+              <PostCard post={hero} index={0} featured />
+            </motion.div>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+            {rest.map((post, i) => (
+              <motion.div key={post.id} variants={item}>
+                <PostCard post={post} index={i + 1} />
+              </motion.div>
             ))}
           </div>
-        )}
-      </section>
-    </div>
-  );
-}
-
-function Chip({ label }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text-main shadow-soft">
-      <Sparkles className="w-3.5 h-3.5 text-accent" />
-      <span>{label}</span>
+        </motion.div>
+      )}
     </div>
   );
 }

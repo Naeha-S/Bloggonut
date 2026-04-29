@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Image as ImageIcon, Loader, PenTool, BookMarked } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon, Loader, PenTool, BookMarked, Upload, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export function CreatePost() {
@@ -14,13 +14,48 @@ export function CreatePost() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [dragActive, setDragActive] = useState(false);
   const navigate = useNavigate();
 
   const categories = ['Technology', 'Design', 'Development', 'AI', 'Startup', 'Lifestyle'];
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleImageUpload = (file) => {
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload a valid image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be less than 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setFormData(prev => ({ ...prev, image: e.target.result }));
+      setError('');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleImageUpload(e.dataTransfer.files[0]);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -162,27 +197,63 @@ export function CreatePost() {
               <ImageIcon className="w-4 h-4 text-accent" />
               Cover Image
             </label>
-            <input
-              type="url"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              placeholder="Paste image URL..."
-              className="input-base w-full py-3 px-4"
-            />
-            {formData.image && (
+            
+            {formData.image ? (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-4 h-40 w-full rounded-xl overflow-hidden border border-border shadow-lg"
+                className="relative group"
               >
-                <motion.img 
-                  src={formData.image} 
-                  alt="Preview" 
-                  className="w-full h-full object-cover"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
+                <div className="mt-4 h-56 w-full rounded-xl overflow-hidden border border-border shadow-lg">
+                  <motion.img 
+                    src={formData.image} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+                <motion.button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
+                  className="absolute top-3 right-3 bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full backdrop-blur-sm transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <X className="w-4 h-4" />
+                </motion.button>
+              </motion.div>
+            ) : (
+              <motion.div
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                animate={{ backgroundColor: dragActive ? 'rgba(225, 29, 72, 0.05)' : 'transparent' }}
+                className={`mt-4 p-8 rounded-xl border-2 border-dashed transition-colors cursor-pointer ${
+                  dragActive ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/50'
+                }`}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+                  className="hidden"
+                  id="image-upload"
                 />
+                <label htmlFor="image-upload" className="flex flex-col items-center gap-4 cursor-pointer">
+                  <motion.div
+                    animate={{ y: dragActive ? -4 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Upload className="w-10 h-10 text-accent/60" />
+                  </motion.div>
+                  <div className="text-center">
+                    <p className="text-text-main font-semibold">Drag your image here</p>
+                    <p className="text-text-muted text-sm">or click to browse</p>
+                    <p className="text-text-subtle text-xs mt-2">Max 5MB • JPG, PNG, WebP</p>
+                  </div>
+                </label>
               </motion.div>
             )}
           </div>

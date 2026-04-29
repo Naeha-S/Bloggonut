@@ -1,47 +1,135 @@
-import React from 'react';
-import { Search, Menu, Edit, Feather } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Edit3, Feather, X } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import brandLogo from '../../assets/hero.png';
 
+const NAV_LINKS = [
+  { label: 'Discover', path: '/explore' },
+  { label: 'Trending', path: '/trending' },
+  { label: 'Saved', path: '/bookmarks' },
+];
+
 export function Navbar({ toggleSidebar }) {
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <nav className="navbar-soft border-b border-border sticky top-0 z-50 flex items-center justify-between px-6 py-4 md:py-5">
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={toggleSidebar}
-          className="p-2.5 -ml-2 rounded-2xl hover:bg-surface-secondary text-text-muted hover:text-text-main transition-all duration-200 hover:scale-105"
+    <nav
+      className="navbar-soft flex items-center justify-between gap-4 px-5 md:px-8"
+      style={{
+        height: scrolled ? '52px' : '60px',
+        transition: 'height 0.3s ease',
+      }}
+    >
+      {/* Brand */}
+      <Link
+        to="/"
+        className="group flex items-center gap-2.5 shrink-0"
+        style={{ textDecoration: 'none' }}
+      >
+        <span
+          className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden"
+          style={{
+            background: 'var(--color-parchment)',
+            border: '1px solid var(--color-border)',
+            boxShadow: 'var(--shadow-xs)',
+          }}
         >
-          <Menu className="w-5 h-5" />
-        </button>
-        <Link to="/" className="group flex items-center gap-3 font-display font-semibold text-xl tracking-tight text-text-main hover:text-accent transition-all">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-secondary border border-border shadow-soft overflow-hidden">
-            <img src={brandLogo} alt="Bloggonut logo" className="h-full w-full object-contain p-1" />
-          </span>
-          <span>Bloggonut</span>
-        </Link>
+          <img src={brandLogo} alt="Bloggonut" className="h-full w-full object-contain p-0.5" />
+        </span>
+        <span
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.1rem',
+            fontWeight: 400,
+            color: 'var(--color-charcoal)',
+            letterSpacing: '-0.02em',
+            transition: 'color 0.2s ease',
+          }}
+          className="group-hover:text-[color:var(--color-gold)] transition-colors"
+        >
+          Bloggonut
+        </span>
+      </Link>
+
+      {/* Nav Links — hidden mobile */}
+      <div className="hidden md:flex items-center gap-6">
+        {NAV_LINKS.map((link) => (
+          <Link
+            key={link.path}
+            to={link.path}
+            className="nav-link"
+            style={{
+              color: location.pathname === link.path
+                ? 'var(--color-charcoal)'
+                : undefined,
+            }}
+          >
+            {link.label}
+          </Link>
+        ))}
       </div>
-      
-      <div className="flex-1 max-w-lg px-8 hidden md:block">
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within:text-accent transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Search stories..." 
-            className="input-base w-full py-2.5 pl-11 pr-4 text-sm font-light"
-          />
+
+      {/* Search */}
+      <div className="flex-1 max-w-xs hidden md:block">
+        <div className="search-wrap">
+          <div className="search-glow" />
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 transition-colors"
+              style={{
+                width: 14, height: 14,
+                color: searchFocused ? 'var(--color-gold)' : 'var(--color-subtle)',
+                transition: 'color 0.2s ease',
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Search stories…"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              className="input-base pl-9 pr-8 py-2"
+              style={{ fontSize: '0.825rem' }}
+            />
+            {searchValue && (
+              <button
+                onClick={() => setSearchValue('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: 'var(--color-subtle)' }}
+              >
+                <X style={{ width: 12, height: 12 }} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
+      {/* Right actions */}
       <div className="flex items-center gap-3">
-        <Link to="/write" className="hidden sm:flex items-center gap-2 text-sm font-medium text-text-muted hover:text-accent transition-all duration-200 hover:gap-3">
-          <Edit className="w-4 h-4" />
+        <Link
+          to="/write"
+          className="hidden sm:flex items-center gap-1.5 nav-link"
+          style={{ color: 'var(--color-muted)', fontSize: '0.825rem' }}
+        >
+          <Edit3 style={{ width: 13, height: 13 }} />
           Write
         </Link>
-        <Link 
+        <Link
           to="/auth"
-          className="btn-primary text-sm py-2.5 px-5 font-medium"
+          className="btn-primary"
+          style={{ fontSize: '0.8rem', padding: '0.45rem 1rem' }}
         >
-          Sign In
+          Sign in
         </Link>
       </div>
     </nav>

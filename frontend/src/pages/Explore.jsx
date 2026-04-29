@@ -2,188 +2,154 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PostCard } from '../components/post/PostCard';
-import { Compass, Loader, Sparkles, Layers3, ChevronRight } from 'lucide-react';
+import { Compass, ArrowRight } from 'lucide-react';
 import { TOPICS } from '../data/topics';
+
+const container = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.08 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] } },
+};
+
+function EditorLoader() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[55vh] gap-4">
+      <div className="editor-loader" />
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--color-subtle)', letterSpacing: '0.08em' }}>
+        loading stories…
+      </p>
+    </div>
+  );
+}
 
 export function Explore() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/posts');
-        if (!response.ok) throw new Error('Failed to fetch posts');
-        const data = await response.json();
-        console.log('[Explore] posts received:', Array.isArray(data) ? data.length : 0, data);
-        setPosts(data);
-      } catch (err) {
-        console.error('[Explore] fetch error:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPosts();
+    fetch('http://localhost:5000/api/posts')
+      .then((r) => { if (!r.ok) throw new Error('Failed to fetch'); return r.json(); })
+      .then(setPosts)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-        >
-          <Loader className="w-8 h-8 text-accent" />
-        </motion.div>
-      </div>
-    );
-  }
+  if (loading) return <EditorLoader />;
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.1,
-      },
-    },
-  };
+  const filteredPosts = activeFilter === 'all'
+    ? posts
+    : posts.filter((p) => p.category?.toLowerCase() === activeFilter);
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] },
-    },
-  };
-
-  const previewPosts = posts.slice(0, 3);
+  const [hero, ...rest] = filteredPosts;
 
   return (
-    <div className="mt-4 md:mt-6 pb-8 space-y-8">
-      <motion.section
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-1 xl:grid-cols-[0.95fr_1.05fr] gap-6 items-start"
+    <div>
+      {/* ── Masthead ── */}
+      <motion.header
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.65 }}
+        style={{ marginBottom: '2.75rem' }}
       >
-        <motion.div variants={itemVariants} className="card-panel depth-layer-3 p-6 md:p-8 relative overflow-visible">
-          <div className="signature-badge top-left">All Posts</div>
-          <div className="micro-label mb-4">🔍 Discover</div>
-          <h1 className="font-display text-4xl md:text-5xl font-semibold text-text-main leading-tight max-w-3xl">
-            Explore stories without the blank page drama.
-          </h1>
-          <p className="mt-4 text-base md:text-lg text-text-muted max-w-2xl leading-relaxed">
-            The browse view now starts with content immediately, then opens into a full card grid instead of a tall empty stack.
-          </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Chip label={`${posts.length} stories`} icon={<Sparkles className="w-3.5 h-3.5" />} />
-            <Chip label="Card grid" icon={<Layers3 className="w-3.5 h-3.5" />} />
-            <Chip label="Topic filters" icon={<ChevronRight className="w-3.5 h-3.5" />} />
-          </div>
-        </motion.div>
-
-        <motion.aside variants={itemVariants} className="card-panel depth-layer-2 p-5 md:p-6 space-y-4">
-          <div className="micro-label mb-1">Quick filters</div>
-          <p className="text-xl font-display font-semibold text-text-main leading-snug">Jump to one topic or sample a few recent posts.</p>
-
-          <div className="grid grid-cols-2 gap-2">
-            {TOPICS.map((topic) => (
-              <Link
-                key={topic.slug}
-                to={`/topics/${topic.slug}`}
-                className="rounded-2xl border border-border bg-surface-secondary/70 px-3 py-3 text-sm font-semibold text-text-main hover:text-accent hover:border-accent/40 transition-colors"
-              >
-                <span className="block uppercase tracking-[0.14em] text-[11px] text-text-subtle mb-1">{topic.label}</span>
-                <span className="line-clamp-2 text-xs font-normal text-text-muted">{topic.description}</span>
-              </Link>
-            ))}
-          </div>
-
-          <div className="space-y-3 pt-2">
-            {previewPosts.map((post, index) => (
-              <div key={post.id} className="flex items-center gap-3 rounded-2xl bg-surface-secondary/65 p-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-accent text-xs font-bold">0{index + 1}</div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-text-main line-clamp-1">{post.title}</p>
-                  <p className="text-xs text-text-muted">{post.category}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.aside>
-      </motion.section>
-
-      <div className="divider-playful my-8 md:my-10" />
-
-      {error ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="p-12 rounded-3xl bg-surface border border-border text-text-muted text-center shadow-soft"
+        <div className="flex items-center gap-3 mb-4">
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', fontWeight: 500, color: 'var(--color-gold)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            // Explore
+          </span>
+          <div className="accent-line" style={{ flex: 1 }} />
+        </div>
+        <h1
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)',
+            fontWeight: 400,
+            color: 'var(--color-charcoal)',
+            letterSpacing: '-0.035em',
+            lineHeight: 1.1,
+            marginBottom: '1rem',
+          }}
         >
-          <p className="text-base">{error}</p>
-        </motion.div>
-      ) : (
-        <motion.section
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="space-y-5"
-        >
-          <div className="flex items-end justify-between gap-4 flex-wrap">
-            <div>
-              <div className="micro-label mb-2">All stories</div>
-              <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-main">A denser card wall, no empty lead-in</h2>
-            </div>
-            <p className="text-text-muted max-w-xl">The feed starts immediately and uses a responsive grid so 25 posts feel intentional instead of stacked oddly.</p>
-          </div>
+          Browse the full archive
+        </h1>
+        <p style={{ fontSize: '0.95rem', color: 'var(--color-muted)', lineHeight: 1.65, maxWidth: '480px' }}>
+          {posts.length} stories across {TOPICS.length} topics. Filter by category or scroll the complete wall.
+        </p>
+      </motion.header>
 
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {posts.map((post, i) => (
-              <motion.div
-                key={post.id}
-                variants={itemVariants}
-                initial="hidden"
-                animate="visible"
-                className={i === 0 ? 'md:col-span-2 xl:col-span-2' : ''}
-              >
-                <PostCard post={post} index={i} featured={i === 0} />
+      {/* ── Topic filter chips ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="flex flex-wrap gap-2"
+        style={{ marginBottom: '2.5rem' }}
+      >
+        <button
+          onClick={() => setActiveFilter('all')}
+          className={`tag-chip ${activeFilter === 'all' ? 'active' : ''}`}
+          style={{ fontSize: '0.65rem' }}
+        >
+          All ({posts.length})
+        </button>
+        {TOPICS.map((topic) => {
+          const count = posts.filter((p) => p.category?.toLowerCase() === topic.slug).length;
+          return (
+            <button
+              key={topic.slug}
+              onClick={() => setActiveFilter(topic.slug)}
+              className={`tag-chip ${activeFilter === topic.slug ? 'active' : ''}`}
+              style={{ fontSize: '0.65rem' }}
+            >
+              {topic.label} {count > 0 && `(${count})`}
+            </button>
+          );
+        })}
+      </motion.div>
+
+      {/* ── Error ── */}
+      {error && (
+        <div style={{ padding: '2rem', background: 'var(--color-warm-white)', borderRadius: '1rem', color: 'var(--color-muted)', textAlign: 'center' }}>
+          {error}
+        </div>
+      )}
+
+      {/* ── Empty ── */}
+      {!error && filteredPosts.length === 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', paddingTop: '5rem' }}>
+          <Compass style={{ width: 48, height: 48, color: 'var(--color-border)', margin: '0 auto 1rem' }} />
+          <p style={{ color: 'var(--color-muted)' }}>No stories in this topic yet.</p>
+        </motion.div>
+      )}
+
+      {!error && filteredPosts.length > 0 && (
+        <motion.div variants={container} initial="hidden" animate="visible">
+          {/* Hero — first post spans full width */}
+          {hero && (
+            <motion.div variants={item} style={{ marginBottom: '1.5rem' }}>
+              <PostCard post={hero} index={0} featured />
+            </motion.div>
+          )}
+
+          {/* Two-column + variable grid */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '1.25rem',
+            }}
+          >
+            {rest.map((post, i) => (
+              <motion.div key={post.id} variants={item}>
+                <PostCard post={post} index={i + 1} />
               </motion.div>
             ))}
           </div>
-        </motion.section>
-      )}
-
-      {!error && posts.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-20"
-        >
-          <motion.div
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
-            <Compass className="w-16 h-16 text-text-subtle/30 mx-auto mb-4" />
-          </motion.div>
-          <p className="text-text-muted text-lg">No stories available yet.</p>
         </motion.div>
       )}
-    </div>
-  );
-}
-
-function Chip({ label, icon }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text-main shadow-soft">
-      <span className="text-accent">{icon}</span>
-      <span>{label}</span>
     </div>
   );
 }

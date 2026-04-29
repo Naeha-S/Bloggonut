@@ -1,7 +1,73 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { PostCard } from '../components/post/PostCard';
-import { BookMarked, Loader, ArrowRight, Compass, Flame, Bookmark, Sparkles, ChevronRight } from 'lucide-react';
+import { BookMarked, ArrowRight, Sparkles, TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+/* ── animation variants ── */
+const container = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.09, delayChildren: 0.05 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 22 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.4, 0, 0.2, 1] } },
+};
+
+/* ── Loader ── */
+function EditorLoader() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[55vh] gap-4">
+      <div className="editor-loader" />
+      <p
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.7rem',
+          color: 'var(--color-subtle)',
+          letterSpacing: '0.08em',
+        }}
+      >
+        loading stories…
+      </p>
+    </div>
+  );
+}
+
+/* ── Section label ── */
+function SectionLabel({ index, label, sub }) {
+  return (
+    <div className="flex items-end gap-4 mb-6">
+      <div>
+        <p className="section-number mb-1">§ {String(index).padStart(2, '0')}</p>
+        <h2
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(1.5rem, 2.5vw, 2.1rem)',
+            fontWeight: 400,
+            color: 'var(--color-charcoal)',
+            letterSpacing: '-0.025em',
+            lineHeight: 1.1,
+          }}
+        >
+          {label}
+        </h2>
+      </div>
+      {sub && (
+        <p
+          style={{
+            fontSize: '0.875rem',
+            color: 'var(--color-muted)',
+            lineHeight: 1.5,
+            maxWidth: '380px',
+            paddingBottom: '2px',
+          }}
+        >
+          {sub}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function Home() {
   const [posts, setPosts] = useState([]);
@@ -9,243 +75,236 @@ export function Home() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/posts');
-        if (!response.ok) throw new Error('Failed to fetch posts');
-        const data = await response.json();
-        console.log('[Home] posts received:', Array.isArray(data) ? data.length : 0, data);
-        setPosts(data);
-      } catch (err) {
-        console.error('[Home] fetch error:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPosts();
+    fetch('http://localhost:5000/api/posts')
+      .then((r) => { if (!r.ok) throw new Error('Failed to fetch'); return r.json(); })
+      .then(setPosts)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-        >
-          <Loader className="w-8 h-8 text-accent" />
-        </motion.div>
-      </div>
-    );
-  }
+  if (loading) return <EditorLoader />;
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] },
-    },
-  };
-
-  const spotlightPosts = posts.slice(0, 4);
-  const feedPosts = posts.slice(0, 8);
+  /* — slice posts for layout — */
+  const [featured, ...rest] = posts;
+  const medium   = rest.slice(0, 2);
+  const compact  = rest.slice(2, 5);
+  const feedPosts = posts.slice(5, 13);
 
   return (
-    <div className="mt-4 md:mt-6 pb-8">
-      {!error && posts.length > 0 && (
-        <motion.section
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="relative shape-blob-top"
-        >
-          <div className="grid grid-cols-1 xl:grid-cols-[1.12fr_0.88fr] gap-8 xl:gap-12 items-start">
-            <div className="space-y-6">
-              <motion.div variants={itemVariants} className="card-panel depth-layer-3 p-6 md:p-8 tilt-neg-1 relative overflow-visible">
-                <div className="signature-badge top-left">Daily Stack</div>
-                <div className="micro-label mb-4">A hand-built front page</div>
-                <h1 className="font-display text-5xl md:text-6xl font-semibold text-text-main leading-tight max-w-3xl">
-                  Stories arranged like a magazine spread, not a form.
-                </h1>
-                <p className="mt-5 text-lg text-text-muted leading-relaxed max-w-2xl">
-                  Scroll through the stacked feed below. The layout stays compact, editorial, and fully populated above the fold.
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <LinkChip label="Featured" icon={<Sparkles className="w-3.5 h-3.5" />} />
-                  <LinkChip label={`All stories ${posts.length}`} icon={<ChevronRight className="w-3.5 h-3.5" />} />
-                  <LinkChip label="Saved notes" icon={<Bookmark className="w-3.5 h-3.5" />} />
-                </div>
-
-                <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <StatTile label="Fresh posts" value={String(posts.length)} />
-                  <StatTile label="Top read" value={posts[0]?.category || 'Design'} />
-                  <StatTile label="Vibe" value="Warm + tactile" />
-                </div>
-              </motion.div>
-
-              <motion.div variants={itemVariants} className="card-panel depth-layer-2 p-5 md:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <div className="micro-label mb-1">Spotlight</div>
-                    <p className="text-xl font-display font-semibold text-text-main">The stack that starts immediately.</p>
-                  </div>
-                  <div className="signature-badge static">Now</div>
-                </div>
-
-                <div className="overflow-x-auto pb-2">
-                  <div className="flex gap-4 min-w-max pr-6">
-                    {spotlightPosts.map((post, index) => (
-                      <div key={post.id} className={`w-[280px] sm:w-[300px] ${index % 2 === 0 ? 'tilt-neg-1' : 'tilt-pos-1'}`}>
-                        <PostCard post={post} index={index} compact />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            <motion.aside variants={itemVariants} className="space-y-6 xl:sticky xl:top-24 self-start">
-              <div className="card-panel depth-layer-2 p-6 md:p-7 tilt-pos-1">
-                <div className="micro-label mb-2">Reading rail</div>
-                <p className="text-2xl font-display font-semibold text-text-main leading-tight">Use the right side for context, not empty space.</p>
-                <p className="mt-4 text-text-muted leading-relaxed">
-                  It keeps the page feeling authored. The main feed stays stacked and the supporting details sit beside it instead of pushing everything downward.
-                </p>
-              </div>
-
-              <div className="card-panel depth-layer-1 p-5 md:p-6">
-                <div className="micro-label mb-3">Three quick picks</div>
-                <div className="space-y-3">
-                  {spotlightPosts.slice(0, 3).map((post, index) => (
-                    <div key={post.id} className="flex items-start gap-3 rounded-2xl bg-surface-secondary/65 p-3">
-                      <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-surface text-accent text-xs font-bold">
-                        0{index + 1}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-semibold text-text-main leading-snug line-clamp-2">{post.title}</p>
-                        <p className="text-xs text-text-muted mt-1">{post.category} • {post.author}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.aside>
-          </div>
-        </motion.section>
-      )}
-
-      <div className="divider-playful my-10 md:my-12" />
-
-      {!error && feedPosts.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
-          className="space-y-5"
-        >
-          <div className="flex items-end justify-between gap-4 flex-wrap">
-            <div>
-              <div className="micro-label mb-2">Stacked feed</div>
-              <h2 className="font-display text-3xl md:text-4xl font-semibold text-text-main">Browse the full story wall</h2>
-            </div>
-            <p className="text-text-muted max-w-xl">
-              A denser stacked layout keeps the page alive and lets each card feel like part of a magazine spread.
-            </p>
-          </div>
-
-          <div className="space-y-5 cards-overlap">
-            {feedPosts.map((post, index) => (
-              <motion.div
-                key={post.id}
-                variants={itemVariants}
-                initial="hidden"
-                animate="visible"
-                className={`${index % 2 === 0 ? 'offset-left' : 'offset-right'} relative`}
-                style={{ '--z-index': feedPosts.length - index }}
-              >
-                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_0.8fr] gap-5 items-start">
-                  <div className={index % 2 === 0 ? 'tilt-neg-1' : 'tilt-pos-1'}>
-                    <PostCard post={post} index={index} featured={index === 0} />
-                  </div>
-                  <div className="card-panel depth-layer-1 p-5 md:p-6 space-y-4">
-                    <div className="micro-label">Story note</div>
-                    <p className="text-2xl font-display font-semibold text-text-main leading-tight">
-                      {index === 0 ? 'Lead with the strongest story.' : 'Let the next card sit beside the main one.'}
-                    </p>
-                    <p className="text-text-muted leading-relaxed">
-                      This secondary panel keeps the rhythm uneven and prevents the page from reading like a default grid.
-                    </p>
-                    <div className="organic-line my-2" />
-                    <div className="flex items-center justify-between text-sm text-text-muted">
-                      <span>{post.author}</span>
-                      <span>{post.category}</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="p-12 rounded-3xl bg-surface border border-border text-text-muted text-center shadow-soft"
-        >
-          <p className="text-base">{error}</p>
-        </motion.div>
-      )}
-
-      {/* Empty State */}
-      {!error && posts.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-20"
-        >
-          <motion.div
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ duration: 3, repeat: Infinity }}
+    <div>
+      {/* ── Hero masthead ── */}
+      <motion.header
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+        style={{ marginBottom: '3rem' }}
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.62rem',
+              fontWeight: 500,
+              color: 'var(--color-gold)',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+            }}
           >
-            <BookMarked className="w-16 h-16 text-text-subtle/30 mx-auto mb-4" />
-          </motion.div>
-          <p className="text-text-muted text-lg">No stories yet. Check back soon!</p>
+            // The Daily Stack
+          </span>
+          <div className="accent-line" style={{ flex: 1 }} />
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.62rem',
+              color: 'var(--color-subtle)',
+              letterSpacing: '0.08em',
+            }}
+          >
+            {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+          </span>
+        </div>
+
+        <h1
+          className="text-gradient-warm"
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(2.8rem, 6vw, 5rem)',
+            fontWeight: 400,
+            letterSpacing: '-0.04em',
+            lineHeight: 1.0,
+            maxWidth: '820px',
+            marginBottom: '1.25rem',
+          }}
+        >
+          Stories arranged<br />
+          <em style={{ fontStyle: 'italic', opacity: 0.75 }}>like a magazine spread.</em>
+        </h1>
+
+        <div className="flex items-center gap-4 flex-wrap">
+          <p style={{ fontSize: '1rem', color: 'var(--color-muted)', lineHeight: 1.6, maxWidth: '520px' }}>
+            Curated writing on technology, design & culture — intentionally laid out, not algorithm-sorted.
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.375rem',
+                padding: '0.3rem 0.75rem',
+                background: 'var(--color-parchment)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '4px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.65rem',
+                color: 'var(--color-muted)',
+                letterSpacing: '0.05em',
+              }}
+            >
+              <Sparkles style={{ width: 10, height: 10, color: 'var(--color-gold)' }} />
+              {posts.length} stories
+            </span>
+            <Link to="/write" className="btn-primary" style={{ fontSize: '0.8rem', padding: '0.4rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
+              Write <ArrowRight style={{ width: 13, height: 13 }} />
+            </Link>
+          </div>
+        </div>
+      </motion.header>
+
+      {/* ── Error state ── */}
+      {error && (
+        <div
+          style={{
+            padding: '2.5rem',
+            borderRadius: '1rem',
+            background: 'var(--color-warm-white)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-muted)',
+            textAlign: 'center',
+            fontSize: '0.9rem',
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      {/* ── Empty state ── */}
+      {!error && posts.length === 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', paddingTop: '6rem' }}>
+          <BookMarked style={{ width: 48, height: 48, color: 'var(--color-border)', margin: '0 auto 1rem' }} />
+          <p style={{ color: 'var(--color-muted)', fontSize: '1rem' }}>No stories yet — check back soon.</p>
         </motion.div>
       )}
-    </div>
-  );
-}
 
-function LinkChip({ label, icon }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text-main shadow-soft">
-      <span className="text-accent">{icon}</span>
-      <span>{label}</span>
-    </div>
-  );
-}
+      {!error && posts.length > 0 && (
+        <>
+          {/* ── § 01 — Magazine spread ── */}
+          <motion.section variants={container} initial="hidden" animate="visible" style={{ marginBottom: '4rem' }}>
+            <SectionLabel index={1} label="This week's cover" sub="The most significant read right now." />
 
-function StatTile({ label, value }) {
-  return (
-    <div className="rounded-2xl bg-surface-secondary/75 border border-border px-4 py-3">
-      <div className="text-[11px] uppercase tracking-[0.14em] text-text-subtle font-semibold">{label}</div>
-      <div className="mt-1 font-display text-lg font-semibold text-text-main">{value}</div>
+            {/* Magazine grid: 1 large + 2 medium */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr 1fr',
+                gridTemplateRows: 'auto',
+                gap: '1.25rem',
+              }}
+              className="magazine-spread"
+            >
+              {/* Featured — spans 2 cols */}
+              {featured && (
+                <motion.div variants={item} style={{ gridColumn: '1 / 3' }}>
+                  <PostCard post={featured} index={0} featured />
+                </motion.div>
+              )}
+
+              {/* Right column — 2 medium stacked */}
+              <motion.div variants={item} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {medium.map((post, i) => (
+                  <div key={post.id} style={{ flex: 1 }}>
+                    <PostCard post={post} index={i + 1} />
+                  </div>
+                ))}
+              </motion.div>
+            </div>
+
+            {/* ── Compact horizontal strip ── */}
+            {compact.length > 0 && (
+              <motion.div
+                variants={item}
+                style={{
+                  marginTop: '1.5rem',
+                  background: 'var(--color-warm-white)',
+                  borderRadius: '1rem',
+                  padding: '0.5rem 1.5rem',
+                  boxShadow: 'var(--shadow-xs)',
+                }}
+              >
+                <div className="flex items-center gap-2 pt-2 pb-1" style={{ borderBottom: '1px solid var(--color-border-light)' }}>
+                  <TrendingUp style={{ width: 11, height: 11, color: 'var(--color-gold)' }} />
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.6rem',
+                      fontWeight: 500,
+                      color: 'var(--color-gold)',
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    // Also reading
+                  </span>
+                </div>
+                {compact.map((post, i) => (
+                  <PostCard key={post.id} post={post} index={i} compact />
+                ))}
+              </motion.div>
+            )}
+          </motion.section>
+
+          {/* ── Divider ── */}
+          <div className="divider-playful" />
+
+          {/* ── § 02 — Full feed ── */}
+          {feedPosts.length > 0 && (
+            <motion.section
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              style={{ marginTop: '0.5rem' }}
+            >
+              <SectionLabel index={2} label="The full story wall" sub="Scroll through — each piece earns its place." />
+
+              {/* 3-column responsive grid */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: '1.25rem',
+                }}
+              >
+                {feedPosts.map((post, i) => (
+                  <motion.div
+                    key={post.id}
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.55, delay: 0.1 + i * 0.06 }}
+                  >
+                    <PostCard post={post} index={i} />
+                  </motion.div>
+                ))}
+              </div>
+
+              {posts.length > 13 && (
+                <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+                  <Link to="/explore" className="btn-secondary" style={{ gap: '0.5rem' }}>
+                    View all stories <ArrowRight style={{ width: 14, height: 14 }} />
+                  </Link>
+                </div>
+              )}
+            </motion.section>
+          )}
+        </>
+      )}
     </div>
   );
 }
