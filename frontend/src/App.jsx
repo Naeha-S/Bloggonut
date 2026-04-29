@@ -9,6 +9,8 @@ import { PostDetail } from './pages/PostDetail';
 import { TopicPage } from './pages/TopicPage';
 import { Auth } from './pages/Auth';
 import { CreatePost } from './pages/CreatePost';
+import { EditPost } from './pages/EditPost';
+
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/write" element={<CreatePost />} />
+          <Route path="/edit/:id" element={<EditPost />} />
+
         </Routes>
       </Layout>
     </BrowserRouter>

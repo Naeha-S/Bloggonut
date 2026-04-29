@@ -271,13 +271,13 @@ export const getPosts = async (req, res) => {
     const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
     console.log('[posts:getPosts] raw db rows:', Array.isArray(data) ? data.length : 0);
     console.log('[posts:getPosts] raw db titles:', Array.isArray(data) ? data.map((post) => post.title).slice(0, 8) : []);
-    
+
     // If table doesn't exist yet, return dummy data to fulfill user's "populate with sample posts for now"
     if (error && error.code === '42P01') {
       console.log('[posts:getPosts] table missing, using dummy posts:', DUMMY_POSTS.length);
       return res.status(200).json(mergePosts());
     }
-    
+
     if (error) throw error;
     const mergedPosts = mergePosts(data || []);
     console.log('[posts:getPosts] merged posts:', mergedPosts.length);
@@ -294,7 +294,7 @@ export const getPostById = async (req, res) => {
     const { id } = req.params;
     console.log('[posts:getPostById] requested id:', id);
     const { data, error } = await supabase.from('posts').select('*').eq('id', id).single();
-    
+
     if (error && error.code === '42P01') {
       const post = DUMMY_POSTS.find(p => p.id == id);
       console.log('[posts:getPostById] table missing, dummy match:', Boolean(post));
@@ -344,6 +344,50 @@ export const createPost = async (req, res) => {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: err.errors[0].message });
     }
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const updatePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const validatedData = PostSchema.partial().parse(req.body);
+    const user = req.user;
+
+    const { data: post, error: fetchError } = await supabase.from('posts').select('author_id').eq('id', id).single();
+    if (fetchError) throw fetchError;
+
+    if (post.author_id !== user.id) {
+      return res.status(403).json({ error: 'Not authorized to update this post' });
+    }
+
+    const { data, error } = await supabase.from('posts').update(validatedData).eq('id', id).select();
+    if (error) throw error;
+    res.status(200).json({ message: 'Post updated', data });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: err.errors[0].message });
+    }
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const deletePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.user;
+
+    const { data: post, error: fetchError } = await supabase.from('posts').select('author_id').eq('id', id).single();
+    if (fetchError) throw fetchError;
+
+    if (post.author_id !== user.id) {
+      return res.status(403).json({ error: 'Not authorized to delete this post' });
+    }
+
+    const { error } = await supabase.from('posts').delete().eq('id', id);
+    if (error) throw error;
+    res.status(200).json({ message: 'Post deleted' });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
