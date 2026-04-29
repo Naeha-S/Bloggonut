@@ -1,34 +1,32 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, MessageCircle, Bookmark, Eye, ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Heart, MessageCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { topicSlug } from '../../data/topics';
 
 const MotionLink = motion(Link);
 
-/* ── helpers ── */
 function formatDate(dateStr) {
+  if (!dateStr) return 'Undated';
   return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function AuthorAvatar({ author, size = 28 }) {
+function AuthorMeta({ post }) {
   return (
-    <img
-      src={`https://api.dicebear.com/7.x/notionists/svg?seed=${author}&backgroundColor=transparent`}
-      alt={author}
-      style={{
-        width: size, height: size,
-        borderRadius: '50%',
-        border: '1.5px solid var(--color-border)',
-        background: 'var(--color-parchment)',
-        flexShrink: 0,
-      }}
-    />
+    <div className="grid grid-cols-2 border-t border-[#111111]">
+      <div className="border-r border-[#111111] px-4 py-3">
+        <p className="font-mono text-[0.64rem] uppercase tracking-[0.18em] text-[#737373]">Byline</p>
+        <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-[#111111]">{post.author || 'Staff Writer'}</p>
+      </div>
+      <div className="px-4 py-3">
+        <p className="font-mono text-[0.64rem] uppercase tracking-[0.18em] text-[#737373]">Filed</p>
+        <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-[#111111]">{formatDate(post.date)}</p>
+      </div>
+    </div>
   );
 }
 
-/* ── Featured card ── Large editorial hero ── */
-function FeaturedCard({ post, index }) {
+function FeaturedCard({ post }) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post.likes || 0);
   const navigate = useNavigate();
@@ -36,117 +34,69 @@ function FeaturedCard({ post, index }) {
   return (
     <MotionLink
       to={`/post/${post.id}`}
-      initial={{ opacity: 0, y: 28 }}
+      initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
-      className="group block relative"
-      style={{ textDecoration: 'none' }}
+      transition={{ duration: 0.45 }}
+      className="group block h-full no-underline"
     >
-      <div
-        className="card-panel ripple-container overflow-hidden"
-        style={{ borderRadius: '1.5rem' }}
-      >
-        {/* Image */}
-        {post.image && (
-          <div
-            className="img-zoom-wrap relative"
-            style={{ height: '380px', background: 'var(--color-parchment)' }}
-          >
-            <img
-              src={post.image}
-              alt={post.title}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-            {/* Gradient overlay */}
-            <div
-              style={{
-                position: 'absolute', inset: 0,
-                background: 'linear-gradient(to top, rgba(28,25,23,0.75) 0%, rgba(28,25,23,0.1) 55%, transparent 100%)',
+      <div className="card-panel h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12">
+          <div className="relative border-b border-[#111111] bg-[#E5E5E5] lg:col-span-7 lg:border-b-0 lg:border-r lg:border-[#111111]">
+            {post.image ? (
+              <div className="img-zoom-wrap h-72 md:h-[26rem]">
+                <img src={post.image} alt={post.title} className="h-full w-full object-cover grayscale" />
+              </div>
+            ) : (
+              <div className="h-72 bg-[radial-gradient(#000_1px,transparent_1px)] opacity-10 [background-size:16px_16px] md:h-[26rem]" />
+            )}
+            <button
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                navigate(`/topics/${topicSlug(post.category)}`);
               }}
-            />
-            {/* Category pill — overlaid on image */}
-            <div style={{ position: 'absolute', top: '1.25rem', left: '1.25rem' }}>
-              <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/topics/${topicSlug(post.category)}`); }}
-                className="category-pill"
-              >
-                {post.category}
-              </button>
-            </div>
-            {/* Featured badge */}
-            <div style={{ position: 'absolute', top: '1.25rem', right: '1.25rem' }}>
-              <span className="signature-badge">Featured</span>
-            </div>
-            {/* Title overlaid on image bottom */}
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1.5rem 1.75rem' }}>
-              <h2
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 'clamp(1.6rem, 3vw, 2.25rem)',
-                  fontWeight: 400,
-                  color: '#FDFAF5',
-                  letterSpacing: '-0.025em',
-                  lineHeight: 1.15,
-                  textShadow: '0 1px 8px rgba(0,0,0,0.25)',
-                }}
-              >
+              className="category-pill absolute left-4 top-4"
+            >
+              {post.category}
+            </button>
+            <span className="signature-badge absolute right-4 top-4">Front Page</span>
+          </div>
+
+          <div className="flex flex-col lg:col-span-5">
+            <div className="border-b border-[#111111] p-5 md:p-6">
+              <p className="font-mono text-[0.64rem] uppercase tracking-[0.18em] text-[#CC0000]">Lead story</p>
+              <h2 className="mt-4 font-display text-4xl leading-[0.92] tracking-tight text-[#111111] md:text-5xl">
                 {post.title}
               </h2>
-            </div>
-          </div>
-        )}
-
-        {/* Card body */}
-        <div style={{ padding: '1.25rem 1.75rem 1.5rem' }}>
-          <p
-            style={{
-              fontSize: '0.925rem',
-              color: 'var(--color-muted)',
-              lineHeight: 1.7,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              marginBottom: '1.25rem',
-            }}
-          >
-            {post.description}
-          </p>
-
-          {/* Footer row */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <AuthorAvatar author={post.author} size={30} />
-              <div>
-                <p style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-charcoal)', lineHeight: 1.2 }}>
-                  {post.author}
-                </p>
-                <p style={{ fontSize: '0.7rem', color: 'var(--color-subtle)', fontFamily: 'var(--font-mono)' }}>
-                  {formatDate(post.date)}
-                </p>
-              </div>
+              <p className="mt-5 font-serif text-base leading-relaxed text-[#525252] first-letter:float-left first-letter:pr-2 first-letter:pt-1 first-letter:font-display first-letter:text-6xl first-letter:leading-[0.8] first-letter:text-[#CC0000]">
+                {post.description}
+              </p>
             </div>
 
-            <div className="flex items-center gap-4">
+            <AuthorMeta post={post} />
+
+            <div className="mt-auto grid grid-cols-3 border-t border-[#111111]">
               <button
-                onClick={(e) => { e.preventDefault(); setLiked(!liked); setLikes(liked ? likes - 1 : likes + 1); }}
-                className="flex items-center gap-1.5 meta-reveal"
-                style={{ color: liked ? 'var(--color-rust)' : 'var(--color-subtle)', fontSize: '0.78rem', background: 'none', border: 'none', cursor: 'pointer' }}
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  setLiked((value) => !value);
+                  setLikes((value) => value + (liked ? -1 : 1));
+                }}
+                className="flex items-center gap-2 border-r border-[#111111] px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]"
               >
-                <Heart style={{ width: 14, height: 14, fill: liked ? 'currentColor' : 'none' }} />
-                <span>{likes}</span>
+                <Heart className="h-4 w-4" fill={liked ? 'currentColor' : 'none'} strokeWidth={1.5} />
+                {likes}
               </button>
-              <span
-                className="flex items-center gap-1.5 meta-reveal"
-                style={{ color: 'var(--color-subtle)', fontSize: '0.78rem' }}
-              >
-                <MessageCircle style={{ width: 14, height: 14 }} />
+              <div className="flex items-center gap-2 border-r border-[#111111] px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#111111]">
+                <MessageCircle className="h-4 w-4" strokeWidth={1.5} />
                 {post.comments || 0}
-              </span>
-              <ArrowUpRight
-                className="meta-reveal"
-                style={{ width: 16, height: 16, color: 'var(--color-gold)', transition: 'transform 0.25s ease' }}
-              />
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#111111]">
+                Read
+                <ArrowUpRight className="h-4 w-4 text-[#CC0000]" strokeWidth={1.5} />
+              </div>
             </div>
           </div>
         </div>
@@ -155,7 +105,6 @@ function FeaturedCard({ post, index }) {
   );
 }
 
-/* ── Medium card ── Standard editorial card ── */
 function MediumCard({ post, index }) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post.likes || 0);
@@ -164,77 +113,57 @@ function MediumCard({ post, index }) {
   return (
     <MotionLink
       to={`/post/${post.id}`}
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: index * 0.07, ease: [0.4, 0, 0.2, 1] }}
-      className="group block h-full"
-      style={{ textDecoration: 'none' }}
+      transition={{ duration: 0.4, delay: index * 0.04 }}
+      className="group block h-full no-underline"
     >
-      <div className="card-panel overflow-hidden h-full flex flex-col">
-        {post.image && (
-          <div className="img-zoom-wrap relative" style={{ height: '200px', background: 'var(--color-parchment)' }}>
-            <img src={post.image} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            <div style={{ position: 'absolute', bottom: '0.875rem', left: '0.875rem' }}>
-              <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/topics/${topicSlug(post.category)}`); }}
-                className="category-pill"
-              >
-                {post.category}
-              </button>
+      <div className="card-panel flex h-full flex-col">
+        <div className="relative border-b border-[#111111] bg-[#E5E5E5]">
+          {post.image ? (
+            <div className="img-zoom-wrap h-52">
+              <img src={post.image} alt={post.title} className="h-full w-full object-cover grayscale" />
             </div>
-          </div>
-        )}
-        <div className="flex-1 flex flex-col" style={{ padding: '1.125rem 1.25rem 1.25rem' }}>
-          <h3
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.2rem',
-              fontWeight: 400,
-              color: 'var(--color-charcoal)',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.25,
-              marginBottom: '0.625rem',
-              transition: 'color 0.2s ease',
-              display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
+          ) : (
+            <div className="h-52 bg-[radial-gradient(#000_1px,transparent_1px)] opacity-10 [background-size:16px_16px]" />
+          )}
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              navigate(`/topics/${topicSlug(post.category)}`);
             }}
-            className="group-hover:text-[color:var(--color-gold)]"
+            className="category-pill absolute left-3 top-3"
           >
-            {post.title}
-          </h3>
-          <p
-            style={{
-              fontSize: '0.825rem',
-              color: 'var(--color-muted)',
-              lineHeight: 1.65,
-              flexGrow: 1,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              marginBottom: '1rem',
-            }}
-          >
-            {post.description}
-          </p>
+            {post.category}
+          </button>
+        </div>
 
-          <div style={{ borderTop: '1px solid var(--color-border-light)', paddingTop: '0.875rem' }} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AuthorAvatar author={post.author} size={24} />
-              <span style={{ fontSize: '0.75rem', color: 'var(--color-muted)', fontWeight: 400 }}>{post.author}</span>
-              <span style={{ color: 'var(--color-border)', fontSize: '0.75rem' }}>·</span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--color-subtle)', fontFamily: 'var(--font-mono)' }}>{formatDate(post.date)}</span>
-            </div>
-            <button
-              onClick={(e) => { e.preventDefault(); setLiked(!liked); setLikes(liked ? likes - 1 : likes + 1); }}
-              className="flex items-center gap-1 meta-reveal"
-              style={{ color: liked ? 'var(--color-rust)' : 'var(--color-subtle)', fontSize: '0.72rem', background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              <Heart style={{ width: 12, height: 12, fill: liked ? 'currentColor' : 'none' }} />
-              {likes}
-            </button>
+        <div className="flex-1 border-b border-[#111111] p-4">
+          <p className="font-mono text-[0.64rem] uppercase tracking-[0.18em] text-[#737373]">Story {String(index + 1).padStart(2, '0')}</p>
+          <h3 className="mt-3 font-display text-3xl leading-tight text-[#111111]">{post.title}</h3>
+          <p className="mt-3 font-serif text-sm leading-relaxed text-[#525252]">{post.description}</p>
+        </div>
+
+        <AuthorMeta post={post} />
+
+        <div className="grid grid-cols-2 border-t border-[#111111]">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              setLiked((value) => !value);
+              setLikes((value) => value + (liked ? -1 : 1));
+            }}
+            className="flex items-center gap-2 border-r border-[#111111] px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]"
+          >
+            <Heart className="h-4 w-4" fill={liked ? 'currentColor' : 'none'} strokeWidth={1.5} />
+            {likes}
+          </button>
+          <div className="flex items-center justify-between px-4 py-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#111111]">
+            <span>{post.comments || 0} comments</span>
+            <ArrowUpRight className="h-4 w-4 text-[#CC0000]" strokeWidth={1.5} />
           </div>
         </div>
       </div>
@@ -242,94 +171,43 @@ function MediumCard({ post, index }) {
   );
 }
 
-/* ── Compact card ── Horizontal strip ── */
 function CompactCard({ post, index, rank }) {
   const navigate = useNavigate();
 
   return (
     <MotionLink
       to={`/post/${post.id}`}
-      initial={{ opacity: 0, x: -12 }}
+      initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.06 }}
-      className="group flex items-start gap-3 py-3"
-      style={{
-        textDecoration: 'none',
-        borderBottom: '1px solid var(--color-border-light)',
-      }}
+      transition={{ duration: 0.35, delay: index * 0.04 }}
+      className="group grid grid-cols-[auto_1fr] gap-3 border-b border-[#111111] px-4 py-4 no-underline last:border-b-0 hover:bg-[#F5F5F5]"
     >
-      {/* Rank */}
-      {rank !== undefined && (
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.6rem',
-            fontWeight: 500,
-            color: 'var(--color-gold)',
-            minWidth: '1.25rem',
-            paddingTop: '2px',
-          }}
-        >
-          {String(rank + 1).padStart(2, '0')}
-        </span>
-      )}
-
-      {/* Thumbnail */}
-      {post.image && (
-        <div
-          className="img-zoom-wrap flex-shrink-0"
-          style={{ width: '64px', height: '64px', borderRadius: '0.5rem', overflow: 'hidden', background: 'var(--color-parchment)' }}
-        >
-          <img src={post.image} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        </div>
-      )}
-
-      {/* Text */}
-      <div className="flex-1 min-w-0">
+      <div className="font-mono text-sm uppercase tracking-[0.18em] text-[#CC0000]">
+        {String((rank ?? index) + 1).padStart(2, '0')}
+      </div>
+      <div>
         <button
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/topics/${topicSlug(post.category)}`); }}
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '0.58rem',
-            fontWeight: 500,
-            color: 'var(--color-gold)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            marginBottom: '0.25rem',
-            background: 'none',
-            border: 'none',
-            padding: 0,
-            cursor: 'pointer',
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            navigate(`/topics/${topicSlug(post.category)}`);
           }}
+          className="font-mono text-[0.64rem] uppercase tracking-[0.18em] text-[#737373] hover:text-[#CC0000]"
         >
           {post.category}
         </button>
-        <p
-          className="group-hover:text-[color:var(--color-gold)] transition-colors"
-          style={{
-            fontSize: '0.825rem',
-            fontWeight: 500,
-            color: 'var(--color-charcoal)',
-            lineHeight: 1.3,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {post.title}
-        </p>
-        <p style={{ fontSize: '0.68rem', color: 'var(--color-subtle)', marginTop: '0.25rem', fontFamily: 'var(--font-mono)' }}>
-          {post.author} · {formatDate(post.date)}
+        <p className="mt-2 font-display text-xl leading-tight text-[#111111]">{post.title}</p>
+        <p className="mt-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#737373]">
+          {post.author || 'Staff Writer'} | {formatDate(post.date)}
         </p>
       </div>
     </MotionLink>
   );
 }
 
-/* ── Main export — pick variant by prop ── */
 export function PostCard({ post, index = 0, featured = false, compact = false }) {
   if (featured) return <FeaturedCard post={post} index={index} />;
-  if (compact)  return <CompactCard  post={post} index={index} rank={index} />;
+  if (compact) return <CompactCard post={post} index={index} rank={index} />;
   return <MediumCard post={post} index={index} />;
 }

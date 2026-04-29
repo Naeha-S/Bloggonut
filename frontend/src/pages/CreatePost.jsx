@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Image as ImageIcon, Loader, PenTool, BookMarked, Upload, X } from 'lucide-react';
+import { ArrowLeft, BookMarked, Image as ImageIcon, Loader, Upload, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+
+const CATEGORIES = ['Technology', 'Design', 'Development', 'AI', 'Startup', 'Lifestyle'];
 
 export function CreatePost() {
   const [formData, setFormData] = useState({
@@ -10,14 +11,17 @@ export function CreatePost() {
     content: '',
     category: 'Technology',
     image: '',
-    tags: ''
+    tags: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [dragActive, setDragActive] = useState(false);
   const navigate = useNavigate();
 
-  const categories = ['Technology', 'Design', 'Development', 'AI', 'Startup', 'Lifestyle'];
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleImageUpload = (file) => {
     if (!file.type.startsWith('image/')) {
@@ -31,311 +35,212 @@ export function CreatePost() {
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
-      setFormData(prev => ({ ...prev, image: e.target.result }));
+    reader.onload = (event) => {
+      setFormData((prev) => ({ ...prev, image: event.target.result }));
       setError('');
     };
     reader.readAsDataURL(file);
   };
 
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
+  const handleDrag = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setDragActive(event.type === 'dragenter' || event.type === 'dragover');
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDrop = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
     setDragActive(false);
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleImageUpload(e.dataTransfer.files[0]);
+    if (event.dataTransfer.files?.[0]) {
+      handleImageUpload(event.dataTransfer.files[0]);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (!formData.title || !formData.content) return;
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
       const token = localStorage.getItem('bms_token');
       if (!token) throw new Error('You must be logged in to create a post.');
 
-      const tagsArray = formData.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+      const tagsArray = formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean);
 
       const response = await fetch('http://localhost:5000/api/posts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          tags: tagsArray
-        })
+        body: JSON.stringify({ ...formData, tags: tagsArray }),
       });
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to create post');
-      
       navigate('/');
-    } catch (err) {
-      setError(err.message);
+    } catch (submitError) {
+      setError(submitError.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] },
-    },
-  };
-
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="max-w-4xl mx-auto py-12 px-4"
-    >
-      {/* Back Button */}
-      <motion.div variants={itemVariants}>
-        <Link to="/" className="inline-flex items-center gap-2 text-text-muted hover:text-accent mb-12 transition-colors text-sm font-semibold group">
-          <motion.span whileHover={{ x: -4 }}>
-            <ArrowLeft className="w-4 h-4" />
-          </motion.span>
-          <span>Back to Stories</span>
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-8">
+        <Link to="/" className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.18em] text-[#111111] no-underline hover:text-[#CC0000]">
+          <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+          Back to stories
         </Link>
-      </motion.div>
+      </div>
 
-      {/* Page Header */}
-      <motion.div variants={itemVariants} className="mb-12">
-        <div className="flex items-center gap-3 mb-4">
-          <motion.div animate={{ rotate: [0, 10, 0] }} transition={{ duration: 3, repeat: Infinity }}>
-            <PenTool className="w-6 h-6 text-accent" />
-          </motion.div>
-          <h1 className="font-display text-4xl md:text-5xl font-semibold text-text-main">Share Your Story</h1>
+      <header className="newsprint-header">
+        <p className="news-kicker">Authoring desk</p>
+        <h1 className="newsprint-title mt-4">Compose a new story.</h1>
+        <p className="newsprint-dek">Write directly into the edition with a sharper print-first composition and structured metadata.</p>
+      </header>
+
+      {error ? (
+        <div className="mb-6 border border-[#111111] bg-[#F7E2E2] px-4 py-4">
+          <p className="font-serif text-sm text-[#404040]">{error}</p>
         </div>
-        <p className="text-text-muted text-lg font-light">Craft something extraordinary. Your words matter.</p>
-      </motion.div>
+      ) : null}
 
-      {/* Error Alert */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: error ? 1 : 0, y: error ? 0 : -10 }}
-        transition={{ duration: 0.3 }}
-        className="mb-6"
-      >
-        {error && (
-          <div className="bg-rose-50/80 text-rose-700 p-4 rounded-2xl text-sm border border-rose-200 flex items-start gap-3">
-            <div className="w-5 h-5 rounded-full bg-rose-200 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-rose-700 text-xs font-bold">!</span>
-            </div>
-            <p className="font-light">{error}</p>
-          </div>
-        )}
-      </motion.div>
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Title Section */}
-        <motion.div variants={itemVariants} className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-widest text-text-subtle">Article Title</label>
+      <form onSubmit={handleSubmit} className="newsprint-form border border-[#111111]">
+        <div className="border-b border-[#111111] px-5 py-5">
+          <label htmlFor="post-title">Headline</label>
           <input
+            id="post-title"
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
-            placeholder="Your magnificent headline..."
-            className="w-full bg-transparent text-4xl md:text-5xl font-display font-semibold text-text-main placeholder:text-text-subtle focus:outline-none border-b-2 border-border focus:border-accent transition-colors pb-4"
+            placeholder="Your front-page headline"
+            className="mt-3 w-full border-0 bg-transparent pb-2 font-display text-5xl leading-[0.95] tracking-tight text-[#111111] outline-none placeholder:text-[#A3A3A3]"
             required
           />
-        </motion.div>
+        </div>
 
-        {/* Subtitle Section */}
-        <motion.div variants={itemVariants} className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-widest text-text-subtle">Subtitle</label>
+        <div className="border-b border-[#111111] px-5 py-5">
+          <label htmlFor="post-description">Deck</label>
           <input
+            id="post-description"
             type="text"
             name="description"
             value={formData.description}
             onChange={handleChange}
-            placeholder="A compelling hook or description..."
-            className="w-full bg-transparent text-xl text-text-muted placeholder:text-text-subtle focus:outline-none border-b border-border focus:border-accent transition-colors pb-3"
+            placeholder="A concise summary beneath the headline"
+            className="input-base mt-3"
             required
           />
-        </motion.div>
+        </div>
 
-        {/* Meta Section */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-border">
-          {/* Cover Image */}
-          <div className="space-y-3">
-            <label className="text-xs font-bold uppercase tracking-widest text-text-subtle flex items-center gap-2">
-              <ImageIcon className="w-4 h-4 text-accent" />
-              Cover Image
-            </label>
-            
+        <div className="grid grid-cols-1 border-b border-[#111111] lg:grid-cols-12">
+          <div className="border-b border-[#111111] px-5 py-5 lg:col-span-6 lg:border-b-0 lg:border-r lg:border-[#111111]">
+            <div className="flex items-center gap-2">
+              <ImageIcon className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />
+              <label>Cover image</label>
+            </div>
+
             {formData.image ? (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative group"
-              >
-                <div className="mt-4 h-56 w-full rounded-xl overflow-hidden border border-border shadow-lg">
-                  <motion.img 
-                    src={formData.image} 
-                    alt="Preview" 
-                    className="w-full h-full object-cover"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.3 }}
-                  />
+              <div className="mt-4">
+                <div className="relative border border-[#111111] bg-[#E5E5E5]">
+                  <img src={formData.image} alt="Preview" className="h-72 w-full object-cover grayscale" />
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, image: '' }))}
+                    className="absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center border border-[#111111] bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]"
+                  >
+                    <X className="h-4 w-4" strokeWidth={1.5} />
+                  </button>
                 </div>
-                <motion.button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
-                  className="absolute top-3 right-3 bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-full backdrop-blur-sm transition-colors"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <X className="w-4 h-4" />
-                </motion.button>
-              </motion.div>
+              </div>
             ) : (
-              <motion.div
+              <div
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
-                animate={{ backgroundColor: dragActive ? 'rgba(225, 29, 72, 0.05)' : 'transparent' }}
-                className={`mt-4 p-8 rounded-xl border-2 border-dashed transition-colors cursor-pointer ${
-                  dragActive ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/50'
-                }`}
+                className={`mt-4 border border-dashed border-[#111111] px-6 py-10 text-center ${dragActive ? 'bg-[#F5F5F5]' : ''}`}
               >
                 <input
+                  id="image-upload"
                   type="file"
                   accept="image/*"
-                  onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
                   className="hidden"
-                  id="image-upload"
+                  onChange={(event) => event.target.files?.[0] && handleImageUpload(event.target.files[0])}
                 />
-                <label htmlFor="image-upload" className="flex flex-col items-center gap-4 cursor-pointer">
-                  <motion.div
-                    animate={{ y: dragActive ? -4 : 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Upload className="w-10 h-10 text-accent/60" />
-                  </motion.div>
-                  <div className="text-center">
-                    <p className="text-text-main font-semibold">Drag your image here</p>
-                    <p className="text-text-muted text-sm">or click to browse</p>
-                    <p className="text-text-subtle text-xs mt-2">Max 5MB • JPG, PNG, WebP</p>
-                  </div>
+                <label htmlFor="image-upload" className="flex cursor-pointer flex-col items-center gap-3">
+                  <Upload className="h-8 w-8 text-[#111111]" strokeWidth={1.5} />
+                  <span className="font-mono text-xs uppercase tracking-[0.18em] text-[#111111]">Drop image or click to upload</span>
+                  <span className="font-serif text-sm text-[#525252]">JPG, PNG, or WebP up to 5MB.</span>
                 </label>
-              </motion.div>
+              </div>
             )}
           </div>
 
-          {/* Category & Tags */}
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-widest text-text-subtle">Category</label>
+          <div className="grid gap-5 px-5 py-5 lg:col-span-6">
+            <div>
+              <label htmlFor="post-category">Category</label>
               <select
+                id="post-category"
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="input-base w-full py-3 px-4 appearance-none cursor-pointer"
+                className="input-base mt-3"
               >
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                {CATEGORIES.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
               </select>
             </div>
-            
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-widest text-text-subtle">Tags</label>
+
+            <div>
+              <label htmlFor="post-tags">Tags</label>
               <input
+                id="post-tags"
                 type="text"
                 name="tags"
                 value={formData.tags}
                 onChange={handleChange}
-                placeholder="e.g., technology, design, ai"
-                className="input-base w-full py-3 px-4"
+                placeholder="technology, ai, design"
+                className="input-base mt-3"
               />
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Content Area */}
-        <motion.div variants={itemVariants} className="pt-8 border-t border-border space-y-3">
-          <label className="text-xs font-bold uppercase tracking-widest text-text-subtle">Your Story</label>
+        <div className="border-b border-[#111111] px-5 py-5">
+          <label htmlFor="post-content">Story body</label>
           <textarea
+            id="post-content"
             name="content"
             value={formData.content}
             onChange={handleChange}
-            placeholder="Write your amazing article here. Let your thoughts flow..."
-            className="w-full min-h-[500px] text-lg bg-surface rounded-xl border border-border px-6 py-6 text-text-main placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background transition-all leading-relaxed resize-y font-sans"
+            placeholder="Write the full article here"
+            className="mt-3 min-h-[480px] w-full border border-[#111111] bg-transparent px-4 py-4 font-serif text-base leading-relaxed text-[#404040] outline-none focus:bg-[#F5F5F5]"
             required
           />
-          <p className="text-text-subtle text-xs">
+          <p className="mt-3 font-mono text-[0.66rem] uppercase tracking-[0.14em] text-[#737373]">
             {formData.content.length} characters
           </p>
-        </motion.div>
+        </div>
 
-        {/* Publish Button */}
-        <motion.div variants={itemVariants} className="flex justify-end gap-4 pt-4 border-t border-border">
-          <motion.button
-            type="button"
-            onClick={() => navigate('/')}
-            className="btn-secondary py-3 px-6"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
+        <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:justify-end">
+          <button type="button" onClick={() => navigate('/')} className="btn-secondary">
             Cancel
-          </motion.button>
-          <motion.button 
-            type="submit" 
-            disabled={loading}
-            className="btn-primary py-3 px-8 flex items-center gap-2 font-semibold text-base"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {loading ? (
-              <>
-                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity }}>
-                  <Loader className="w-5 h-5" />
-                </motion.div>
-                <span>Publishing...</span>
-              </>
-            ) : (
-              <>
-                <BookMarked className="w-5 h-5" />
-                <span>Publish Article</span>
-              </>
-            )}
-          </motion.button>
-        </motion.div>
+          </button>
+          <button type="submit" disabled={loading} className="btn-primary">
+            {loading ? <Loader className="h-4 w-4 animate-spin" strokeWidth={1.5} /> : <BookMarked className="h-4 w-4" strokeWidth={1.5} />}
+            Publish
+          </button>
+        </div>
       </form>
-    </motion.div>
+    </div>
   );
 }

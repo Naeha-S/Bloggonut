@@ -1,23 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Home, Compass, Flame, Bookmark, Settings, X, Clock, TrendingUp, Activity, BookOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { Activity, BookOpen, Bookmark, Compass, Flame, Home, Settings, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import brandLogo from '../../assets/hero.png';
 import { TOPICS } from '../../data/topics';
 
 const NAV_ITEMS = [
-  { icon: Home,     label: 'Home',      path: '/',           desc: 'Front page' },
-  { icon: Compass,  label: 'Explore',   path: '/explore',    desc: 'All stories' },
-  { icon: Flame,    label: 'Trending',  path: '/trending',   desc: 'Most read' },
-  { icon: Bookmark, label: 'Bookmarks', path: '/bookmarks',  desc: 'Saved' },
+  { icon: Home, label: 'Home', path: '/' },
+  { icon: Compass, label: 'Explore', path: '/explore' },
+  { icon: Flame, label: 'Trending', path: '/trending' },
+  { icon: Bookmark, label: 'Bookmarks', path: '/bookmarks' },
 ];
 
-const TRENDING_TAGS = ['AI', 'Design', 'React', 'Startup', 'TypeScript', 'UX', 'Web3', 'Career'];
-
 const ACTIVITY_FEED = [
-  { label: 'New post in Technology',   time: '2m ago',  live: true },
-  { label: 'Trending: The design shift', time: '8m ago', live: false },
-  { label: 'New post in AI',           time: '15m ago', live: false },
-  { label: '12 readers active now',    time: 'live',    live: true },
+  { label: 'Fresh post in Technology', time: '2m ago' },
+  { label: 'Topic desk update in AI', time: '8m ago' },
+  { label: 'Readers active across sections', time: 'live' },
 ];
 
 export function Sidebar({ isOpen, toggleSidebar }) {
@@ -26,233 +23,118 @@ export function Sidebar({ isOpen, toggleSidebar }) {
 
   return (
     <>
-      {/* Overlay — mobile */}
-      {isOpen && (
-        <div
+      {isOpen ? (
+        <button
+          type="button"
           onClick={toggleSidebar}
-          className="fixed inset-0 z-40 lg:hidden"
-          style={{ background: 'rgba(28, 25, 23, 0.35)', backdropFilter: 'blur(4px)' }}
+          className="fixed inset-0 z-40 bg-black/25 lg:hidden"
+          aria-label="Close navigation overlay"
         />
-      )}
+      ) : null}
 
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
-        style={{
-          width: '240px',
-          background: 'var(--color-warm-white)',
-          borderRight: '1px solid var(--color-border-light)',
-          boxShadow: 'var(--shadow-soft)',
-        }}
+        className={`fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r border-[#111111] bg-[#F9F9F7] transition-transform duration-200 ease-out lg:static lg:translate-x-0 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
       >
-        {/* Logo header */}
-        <div
-          className="flex items-center justify-between px-5 py-4"
-          style={{ borderBottom: '1px solid var(--color-border-light)' }}
-        >
-          <Link to="/" className="flex items-center gap-2.5" onClick={() => isOpen && toggleSidebar()}>
-            <span
-              className="flex h-7 w-7 items-center justify-center rounded-md overflow-hidden"
-              style={{ background: 'var(--color-parchment)', border: '1px solid var(--color-border)' }}
-            >
-              <img src={brandLogo} alt="Bloggonut" className="h-full w-full object-contain p-0.5" />
+        <div className="flex items-center justify-between border-b border-[#111111] px-5 py-4">
+          <Link to="/" className="flex items-center gap-3 no-underline" onClick={() => isOpen && toggleSidebar()}>
+            <span className="flex h-10 w-10 items-center justify-center border border-[#111111] bg-[#F5F5F2]">
+              <img src={brandLogo} alt="Bloggonut" className="h-full w-full object-contain p-1 grayscale" />
             </span>
-            <span
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '1rem',
-                fontWeight: 400,
-                color: 'var(--color-charcoal)',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Bloggonut
-            </span>
+            <div>
+              <p className="font-mono text-[0.62rem] uppercase tracking-[0.2em] text-[#737373]">City Edition</p>
+              <p className="font-display text-2xl font-black uppercase tracking-tight text-[#111111]">Bloggonut</p>
+            </div>
           </Link>
           <button
+            type="button"
             onClick={toggleSidebar}
-            className="lg:hidden p-1.5 rounded-lg transition-colors"
-            style={{ color: 'var(--color-subtle)' }}
+            className="inline-flex h-11 w-11 items-center justify-center border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] lg:hidden"
+            aria-label="Close navigation"
           >
-            <X style={{ width: 15, height: 15 }} />
+            <X className="h-5 w-5" strokeWidth={1.5} />
           </button>
         </div>
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--color-border) transparent' }}>
-          {/* Navigation */}
-          <div className="px-3 pt-4 pb-2">
-            <p className="micro-label px-2 mb-3" style={{ fontSize: '0.58rem' }}>Navigation</p>
-            <nav className="space-y-0.5">
+        <div className="flex-1 overflow-y-auto px-4 py-5">
+          <section className="border-b border-[#111111] pb-5">
+            <p className="micro-label">Navigation</p>
+            <nav className="mt-4 space-y-2">
               {NAV_ITEMS.map((item) => {
                 const active = location.pathname === item.path;
+
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
                     onClick={() => isOpen && toggleSidebar()}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl group transition-all"
-                    style={{
-                      background: active ? 'var(--color-parchment)' : 'transparent',
-                      color: active ? 'var(--color-charcoal)' : 'var(--color-muted)',
-                    }}
+                    className={`flex items-center gap-3 border px-3 py-3 no-underline transition-all duration-200 ${
+                      active
+                        ? 'border-[#111111] bg-[#111111] text-[#F9F9F7]'
+                        : 'border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]'
+                    }`}
                   >
-                    <item.icon
-                      style={{
-                        width: 15, height: 15,
-                        color: active ? 'var(--color-gold)' : 'var(--color-subtle)',
-                        transition: 'color 0.2s',
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p
-                        style={{
-                          fontSize: '0.825rem',
-                          fontWeight: active ? 500 : 400,
-                          color: active ? 'var(--color-charcoal)' : 'inherit',
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {item.label}
-                      </p>
-                    </div>
+                    <item.icon className="h-4 w-4" strokeWidth={1.5} />
+                    <span className="font-mono text-[0.72rem] uppercase tracking-[0.18em]">{item.label}</span>
                   </Link>
                 );
               })}
             </nav>
-          </div>
+          </section>
 
-          <div style={{ height: '1px', background: 'var(--color-border-light)', margin: '0.75rem 1.25rem' }} />
+          <section className="border-b border-[#111111] py-5">
+            <p className="micro-label">Estimated read</p>
+            <p className="mt-3 font-mono text-sm uppercase tracking-[0.16em] text-[#111111]">{readingTime} min on this page</p>
+          </section>
 
-          {/* Reading time indicator */}
-          <div className="px-5 py-3">
-            <div className="flex items-center gap-2 mb-1">
-              <Clock style={{ width: 11, height: 11, color: 'var(--color-gold)' }} />
-              <span className="micro-label" style={{ fontSize: '0.58rem' }}>Est. read</span>
+          <section className="border-b border-[#111111] py-5">
+            <div className="mb-4 flex items-center gap-2">
+              <Activity className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />
+              <p className="micro-label">Live activity</p>
             </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--color-charcoal)', fontWeight: 500, fontFamily: 'var(--font-mono)' }}>
-              ~{readingTime} min on this page
-            </p>
-            <div
-              className="mt-2 rounded-full overflow-hidden"
-              style={{ height: '3px', background: 'var(--color-border)' }}
-            >
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${(readingTime / 12) * 100}%`,
-                  background: 'linear-gradient(90deg, var(--color-gold), var(--color-rust))',
-                }}
-              />
-            </div>
-          </div>
-
-          <div style={{ height: '1px', background: 'var(--color-border-light)', margin: '0.25rem 1.25rem 0.75rem' }} />
-
-          {/* Trending tags */}
-          <div className="px-5 py-2">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp style={{ width: 11, height: 11, color: 'var(--color-gold)' }} />
-              <span className="micro-label" style={{ fontSize: '0.58rem' }}>Trending tags</span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {TRENDING_TAGS.map((tag) => (
-                <Link
-                  key={tag}
-                  to={`/topics/${tag.toLowerCase()}`}
-                  onClick={() => isOpen && toggleSidebar()}
-                  className="tag-chip"
-                  style={{ fontSize: '0.58rem' }}
-                >
-                  {tag}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ height: '1px', background: 'var(--color-border-light)', margin: '0.75rem 1.25rem' }} />
-
-          {/* Activity feed */}
-          <div className="px-5 py-2">
-            <div className="flex items-center gap-2 mb-3">
-              <Activity style={{ width: 11, height: 11, color: 'var(--color-gold)' }} />
-              <span className="micro-label" style={{ fontSize: '0.58rem' }}>Live activity</span>
-            </div>
-            <div className="space-y-2.5">
-              {ACTIVITY_FEED.map((item, i) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <div
-                    className={`activity-dot mt-1.5 ${item.live ? 'live' : ''}`}
-                    style={{ background: item.live ? 'var(--color-gold)' : 'var(--color-border)' }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-ink)', lineHeight: 1.4 }}>
-                      {item.label}
-                    </p>
-                    <p style={{ fontSize: '0.65rem', color: 'var(--color-subtle)', fontFamily: 'var(--font-mono)' }}>
-                      {item.time}
-                    </p>
+            <div className="space-y-3">
+              {ACTIVITY_FEED.map((item) => (
+                <div key={item.label} className="rail-item">
+                  <div className={`activity-dot ${item.time === 'live' ? 'live' : ''}`} />
+                  <div>
+                    <p className="font-serif text-sm leading-relaxed text-[#404040]">{item.label}</p>
+                    <p className="mt-1 font-mono text-[0.66rem] uppercase tracking-[0.14em] text-[#737373]">{item.time}</p>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div style={{ height: '1px', background: 'var(--color-border-light)', margin: '0.75rem 1.25rem' }} />
-
-          {/* Topics */}
-          <div className="px-3 py-2 pb-4">
-            <div className="flex items-center gap-2 px-2 mb-3">
-              <BookOpen style={{ width: 11, height: 11, color: 'var(--color-gold)' }} />
-              <span className="micro-label" style={{ fontSize: '0.58rem' }}>Topics</span>
+          <section className="py-5">
+            <div className="mb-4 flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />
+              <p className="micro-label">Topic desks</p>
             </div>
-            <div className="space-y-0.5">
+            <div className="space-y-2">
               {TOPICS.map((topic) => (
                 <Link
                   key={topic.slug}
                   to={`/topics/${topic.slug}`}
                   onClick={() => isOpen && toggleSidebar()}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl transition-colors group"
-                  style={{ color: 'var(--color-muted)' }}
+                  className="flex items-center justify-between border border-[#111111] px-3 py-3 text-[#111111] no-underline hover:bg-[#111111] hover:text-[#F9F9F7]"
                 >
-                  <span
-                    className="transition-colors"
-                    style={{
-                      fontSize: '0.8rem',
-                      fontWeight: 400,
-                      color: 'inherit',
-                    }}
-                  >
-                    {topic.label}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '0.6rem',
-                      fontFamily: 'var(--font-mono)',
-                      color: 'var(--color-subtle)',
-                      marginLeft: 'auto',
-                    }}
-                  >
-                    →
-                  </span>
+                  <span className="font-mono text-[0.72rem] uppercase tracking-[0.18em]">{topic.label}</span>
+                  <span className="font-mono text-[0.66rem] uppercase tracking-[0.14em]">Desk</span>
                 </Link>
               ))}
             </div>
-          </div>
+          </section>
         </div>
 
-        {/* Footer */}
-        <div
-          className="px-4 py-3"
-          style={{ borderTop: '1px solid var(--color-border-light)' }}
-        >
+        <div className="border-t border-[#111111] p-4">
           <Link
             to="/auth"
             onClick={() => isOpen && toggleSidebar()}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors"
-            style={{ color: 'var(--color-subtle)', fontSize: '0.8rem' }}
+            className="flex items-center gap-3 border border-[#111111] px-3 py-3 text-[#111111] no-underline hover:bg-[#111111] hover:text-[#F9F9F7]"
           >
-            <Settings style={{ width: 14, height: 14 }} />
-            Settings
+            <Settings className="h-4 w-4" strokeWidth={1.5} />
+            <span className="font-mono text-[0.72rem] uppercase tracking-[0.18em]">Account</span>
           </Link>
         </div>
       </aside>

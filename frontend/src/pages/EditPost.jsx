@@ -1,24 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Image as ImageIcon, Loader, PenTool, BookMarked } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, BookMarked, Loader } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+
+const CATEGORIES = ['Technology', 'Design', 'Development', 'AI', 'Startup', 'Lifestyle'];
 
 export function EditPost() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     content: '',
     category: 'Technology',
     image: '',
-    tags: ''
+    tags: '',
   });
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
-
-  const categories = ['Technology', 'Design', 'Development', 'AI', 'Startup', 'Lifestyle'];
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -26,210 +25,184 @@ export function EditPost() {
         const response = await fetch(`http://localhost:5000/api/posts/${id}`);
         if (!response.ok) throw new Error('Failed to fetch post');
         const data = await response.json();
-        
+
         setFormData({
           title: data.title || '',
           description: data.description || '',
           content: data.content || '',
           category: data.category || 'Technology',
           image: data.image || '',
-          tags: data.tags ? data.tags.join(', ') : ''
+          tags: data.tags ? data.tags.join(', ') : '',
         });
-      } catch (err) {
-        setError(err.message);
+      } catch (fetchError) {
+        setError(fetchError.message);
       } finally {
         setFetching(false);
       }
     };
+
     fetchPost();
   }, [id]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (!formData.title || !formData.content) return;
-    
+
     setLoading(true);
     setError('');
-    
+
     try {
       const token = localStorage.getItem('bms_token');
       if (!token) throw new Error('You must be logged in to edit a post.');
 
-      const tagsArray = formData.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+      const tagsArray = formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean);
 
       const response = await fetch(`http://localhost:5000/api/posts/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          tags: tagsArray
-        })
+        body: JSON.stringify({ ...formData, tags: tagsArray }),
       });
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to edit post');
-      
       navigate(`/post/${id}`);
-    } catch (err) {
-      setError(err.message);
+    } catch (submitError) {
+      setError(submitError.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] } },
-  };
-
   if (fetching) {
     return (
-      <div className="flex justify-center items-center h-[60vh]">
-        <Loader className="w-8 h-8 animate-spin text-accent" />
+      <div className="flex min-h-[55vh] flex-col items-center justify-center gap-4">
+        <div className="editor-loader" />
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-[#737373]">Opening copy desk</p>
       </div>
     );
   }
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="max-w-4xl mx-auto py-12 px-4"
-    >
-      <motion.div variants={itemVariants}>
-        <Link to={`/post/${id}`} className="inline-flex items-center gap-2 text-text-muted hover:text-accent mb-12 transition-colors text-sm font-semibold group">
-          <motion.span whileHover={{ x: -4 }}>
-            <ArrowLeft className="w-4 h-4" />
-          </motion.span>
-          <span>Back to Post</span>
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-8">
+        <Link to={`/post/${id}`} className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.18em] text-[#111111] no-underline hover:text-[#CC0000]">
+          <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+          Back to post
         </Link>
-      </motion.div>
+      </div>
 
-      <motion.div variants={itemVariants} className="mb-12">
-        <div className="flex items-center gap-3 mb-4">
-          <motion.div animate={{ rotate: [0, 10, 0] }} transition={{ duration: 3, repeat: Infinity }}>
-            <PenTool className="w-6 h-6 text-accent" />
-          </motion.div>
-          <h1 className="font-display text-4xl md:text-5xl font-semibold text-text-main">Edit Your Story</h1>
+      <header className="newsprint-header">
+        <p className="news-kicker">Copy desk</p>
+        <h1 className="newsprint-title mt-4">Edit the story.</h1>
+        <p className="newsprint-dek">Revise the headline, metadata, and body while keeping the published structure intact.</p>
+      </header>
+
+      {error ? (
+        <div className="mb-6 border border-[#111111] bg-[#F7E2E2] px-4 py-4">
+          <p className="font-serif text-sm text-[#404040]">{error}</p>
         </div>
-      </motion.div>
+      ) : null}
 
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: error ? 1 : 0, y: error ? 0 : -10 }}
-        className="mb-6"
-      >
-        {error && (
-          <div className="bg-rose-50/80 text-rose-700 p-4 rounded-2xl text-sm border border-rose-200 flex items-start gap-3">
-            <div className="w-5 h-5 rounded-full bg-rose-200 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-rose-700 text-xs font-bold">!</span>
-            </div>
-            <p className="font-light">{error}</p>
-          </div>
-        )}
-      </motion.div>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <motion.div variants={itemVariants} className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-widest text-text-subtle">Article Title</label>
+      <form onSubmit={handleSubmit} className="newsprint-form border border-[#111111]">
+        <div className="border-b border-[#111111] px-5 py-5">
+          <label htmlFor="edit-title">Headline</label>
           <input
+            id="edit-title"
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
-            className="w-full bg-transparent text-4xl md:text-5xl font-display font-semibold text-text-main placeholder:text-text-subtle focus:outline-none border-b-2 border-border focus:border-accent transition-colors pb-4"
+            className="mt-3 w-full border-0 bg-transparent pb-2 font-display text-5xl leading-[0.95] tracking-tight text-[#111111] outline-none"
             required
           />
-        </motion.div>
+        </div>
 
-        <motion.div variants={itemVariants} className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-widest text-text-subtle">Subtitle</label>
+        <div className="border-b border-[#111111] px-5 py-5">
+          <label htmlFor="edit-description">Deck</label>
           <input
+            id="edit-description"
             type="text"
             name="description"
             value={formData.description}
             onChange={handleChange}
-            className="w-full bg-transparent text-xl text-text-muted placeholder:text-text-subtle focus:outline-none border-b border-border focus:border-accent transition-colors pb-3"
+            className="input-base mt-3"
             required
           />
-        </motion.div>
+        </div>
 
-        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-border">
-          <div className="space-y-3">
-            <label className="text-xs font-bold uppercase tracking-widest text-text-subtle flex items-center gap-2">
-              <ImageIcon className="w-4 h-4 text-accent" />
-              Cover Image
-            </label>
+        <div className="grid grid-cols-1 border-b border-[#111111] lg:grid-cols-12">
+          <div className="border-b border-[#111111] px-5 py-5 lg:col-span-6 lg:border-b-0 lg:border-r lg:border-[#111111]">
+            <label htmlFor="edit-image">Image URL</label>
             <input
+              id="edit-image"
               type="url"
               name="image"
               value={formData.image}
               onChange={handleChange}
-              className="input-base w-full py-3 px-4"
+              className="input-base mt-3"
             />
           </div>
 
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-widest text-text-subtle">Category</label>
+          <div className="grid gap-5 px-5 py-5 lg:col-span-6">
+            <div>
+              <label htmlFor="edit-category">Category</label>
               <select
+                id="edit-category"
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="input-base w-full py-3 px-4 appearance-none cursor-pointer"
+                className="input-base mt-3"
               >
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                {CATEGORIES.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
               </select>
             </div>
-            
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-widest text-text-subtle">Tags</label>
+
+            <div>
+              <label htmlFor="edit-tags">Tags</label>
               <input
+                id="edit-tags"
                 type="text"
                 name="tags"
                 value={formData.tags}
                 onChange={handleChange}
-                className="input-base w-full py-3 px-4"
+                className="input-base mt-3"
               />
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div variants={itemVariants} className="pt-8 border-t border-border space-y-3">
-          <label className="text-xs font-bold uppercase tracking-widest text-text-subtle">Your Story</label>
+        <div className="border-b border-[#111111] px-5 py-5">
+          <label htmlFor="edit-content">Story body</label>
           <textarea
+            id="edit-content"
             name="content"
             value={formData.content}
             onChange={handleChange}
-            className="w-full min-h-[500px] text-lg bg-surface rounded-xl border border-border px-6 py-6 text-text-main placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background transition-all leading-relaxed resize-y font-sans"
+            className="mt-3 min-h-[480px] w-full border border-[#111111] bg-transparent px-4 py-4 font-serif text-base leading-relaxed text-[#404040] outline-none focus:bg-[#F5F5F5]"
             required
           />
-        </motion.div>
+        </div>
 
-        <motion.div variants={itemVariants} className="flex justify-end gap-4 pt-4 border-t border-border">
-          <motion.button type="button" onClick={() => navigate(-1)} className="btn-secondary py-3 px-6">
+        <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:justify-end">
+          <button type="button" onClick={() => navigate(-1)} className="btn-secondary">
             Cancel
-          </motion.button>
-          <motion.button type="submit" disabled={loading} className="btn-primary py-3 px-8 flex items-center gap-2 font-semibold text-base">
-            {loading ? <Loader className="w-5 h-5 animate-spin" /> : <BookMarked className="w-5 h-5" />}
-            <span>Save Changes</span>
-          </motion.button>
-        </motion.div>
+          </button>
+          <button type="submit" disabled={loading} className="btn-primary">
+            {loading ? <Loader className="h-4 w-4 animate-spin" strokeWidth={1.5} /> : <BookMarked className="h-4 w-4" strokeWidth={1.5} />}
+            Save changes
+          </button>
+        </div>
       </form>
-    </motion.div>
+    </div>
   );
 }

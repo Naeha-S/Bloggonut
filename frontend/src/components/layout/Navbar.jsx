@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Edit3, Feather, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Edit3, Menu, Search, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import brandLogo from '../../assets/hero.png';
 
@@ -10,127 +10,79 @@ const NAV_LINKS = [
 ];
 
 export function Navbar({ toggleSidebar }) {
-  const [searchFocused, setSearchFocused] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
   return (
-    <nav
-      className="navbar-soft flex items-center justify-between gap-4 px-5 md:px-8"
-      style={{
-        height: scrolled ? '52px' : '60px',
-        transition: 'height 0.3s ease',
-      }}
-    >
-      {/* Brand */}
-      <Link
-        to="/"
-        className="group flex items-center gap-2.5 shrink-0"
-        style={{ textDecoration: 'none' }}
-      >
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden"
-          style={{
-            background: 'var(--color-parchment)',
-            border: '1px solid var(--color-border)',
-            boxShadow: 'var(--shadow-xs)',
-          }}
+    <nav className="navbar-soft border-b border-[#111111] px-4 py-3 md:px-6">
+      <div className="mx-auto flex max-w-screen-xl items-center gap-4">
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="topic-focus inline-flex h-11 w-11 items-center justify-center border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] lg:hidden"
+          aria-label="Open navigation"
         >
-          <img src={brandLogo} alt="Bloggonut" className="h-full w-full object-contain p-0.5" />
-        </span>
-        <span
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '1.1rem',
-            fontWeight: 400,
-            color: 'var(--color-charcoal)',
-            letterSpacing: '-0.02em',
-            transition: 'color 0.2s ease',
-          }}
-          className="group-hover:text-[color:var(--color-gold)] transition-colors"
-        >
-          Bloggonut
-        </span>
-      </Link>
+          <Menu className="h-5 w-5" strokeWidth={1.5} />
+        </button>
 
-      {/* Nav Links — hidden mobile */}
-      <div className="hidden md:flex items-center gap-6">
-        {NAV_LINKS.map((link) => (
-          <Link
-            key={link.path}
-            to={link.path}
-            className="nav-link"
-            style={{
-              color: location.pathname === link.path
-                ? 'var(--color-charcoal)'
-                : undefined,
-            }}
-          >
-            {link.label}
-          </Link>
-        ))}
-      </div>
+        <Link to="/" className="group flex items-center gap-3 no-underline">
+          <span className="flex h-11 w-11 items-center justify-center border border-[#111111] bg-[#F5F5F2]">
+            <img src={brandLogo} alt="Bloggonut" className="h-full w-full object-contain p-1 grayscale" />
+          </span>
+          <div>
+            <p className="font-mono text-[0.64rem] uppercase tracking-[0.22em] text-[#737373]">Vol. 1</p>
+            <p className="font-display text-2xl font-black uppercase tracking-tight text-[#111111] group-hover:text-[#CC0000]">
+              Bloggonut
+            </p>
+          </div>
+        </Link>
 
-      {/* Search */}
-      <div className="flex-1 max-w-xs hidden md:block">
-        <div className="search-wrap">
-          <div className="search-glow" />
-          <div className="relative">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 transition-colors"
-              style={{
-                width: 14, height: 14,
-                color: searchFocused ? 'var(--color-gold)' : 'var(--color-subtle)',
-                transition: 'color 0.2s ease',
-              }}
-            />
-            <input
-              type="text"
-              placeholder="Search stories…"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              className="input-base pl-9 pr-8 py-2"
-              style={{ fontSize: '0.825rem' }}
-            />
-            {searchValue && (
-              <button
-                onClick={() => setSearchValue('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-                style={{ color: 'var(--color-subtle)' }}
-              >
-                <X style={{ width: 12, height: 12 }} />
-              </button>
-            )}
+        <div className="hidden flex-1 items-center justify-center gap-8 lg:flex">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`nav-link ${location.pathname === link.path ? 'active' : ''}`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="hidden max-w-sm flex-1 md:block">
+          <div className="search-wrap">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#737373]" strokeWidth={1.5} />
+              <input
+                type="text"
+                placeholder="Search the archive"
+                value={searchValue}
+                onChange={(event) => setSearchValue(event.target.value)}
+                className="input-base pl-10 pr-9"
+              />
+              {searchValue ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchValue('')}
+                  className="absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center text-[#737373] hover:text-[#111111]"
+                  aria-label="Clear search"
+                >
+                  <X className="h-4 w-4" strokeWidth={1.5} />
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Right actions */}
-      <div className="flex items-center gap-3">
-        <Link
-          to="/write"
-          className="hidden sm:flex items-center gap-1.5 nav-link"
-          style={{ color: 'var(--color-muted)', fontSize: '0.825rem' }}
-        >
-          <Edit3 style={{ width: 13, height: 13 }} />
-          Write
-        </Link>
-        <Link
-          to="/auth"
-          className="btn-primary"
-          style={{ fontSize: '0.8rem', padding: '0.45rem 1rem' }}
-        >
-          Sign in
-        </Link>
+        <div className="ml-auto flex items-center gap-3">
+          <Link to="/write" className="nav-link hidden md:inline-flex">
+            <Edit3 className="h-4 w-4" strokeWidth={1.5} />
+            Write
+          </Link>
+          <Link to="/auth" className="btn-primary">
+            Sign in
+          </Link>
+        </div>
       </div>
     </nav>
   );
