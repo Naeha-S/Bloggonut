@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { Activity, BookOpen, Bookmark, Compass, Flame, Home, Settings, User, X } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Activity, BookOpen, Bookmark, Compass, Flame, Home, LogOut, Settings, User, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import brandLogo from '../../assets/hero.png';
 import { TOPICS } from '../../data/topics';
+import { useAuth } from '../../lib/useAuth';
 
 const NAV_ITEMS = [
   { icon: Home, label: 'Home', path: '/', desc: 'Front page' },
@@ -19,23 +20,16 @@ const ACTIVITY_FEED = [
 
 export function Sidebar({ isOpen, toggleSidebar }) {
   const location = useLocation();
-  const [readingTime] = useState(Math.floor(Math.random() * 8) + 4);
-
-  const currentUser = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('bms_user') || 'null');
-    } catch {
-      return null;
-    }
-  }, []);
+  const [readingTime] = React.useState(Math.floor(Math.random() * 8) + 4);
+  const { user, isLoggedIn, role, logout } = useAuth();
 
   const accountName =
-    currentUser?.display_name ||
-    currentUser?.name ||
-    currentUser?.email?.split('@')[0] ||
+    user?.display_name ||
+    user?.name ||
+    user?.email?.split('@')[0] ||
     'Guest Reader';
 
-  const accountDetail = currentUser?.email || 'Not signed in';
+  const accountDetail = user?.email || 'Not signed in';
 
   return (
     <>
@@ -217,12 +211,12 @@ export function Sidebar({ isOpen, toggleSidebar }) {
         <div className="px-4 py-4" style={{ borderTop: '1px solid #111111' }}>
           <div
             className="mb-3 px-3 py-3"
-            style={{ border: '1px solid #111111', background: currentUser ? '#F5F5F2' : '#111111', color: currentUser ? '#111111' : '#F9F9F7' }}
+            style={{ border: '1px solid #111111', background: isLoggedIn ? '#F5F5F2' : '#111111', color: isLoggedIn ? '#111111' : '#F9F9F7' }}
           >
             <div className="flex items-center gap-2.5 mb-2">
               <div
                 className="flex h-9 w-9 items-center justify-center"
-                style={{ border: `1px solid ${currentUser ? '#111111' : '#F9F9F7'}` }}
+                style={{ border: `1px solid ${isLoggedIn ? '#111111' : '#F9F9F7'}` }}
               >
                 <User style={{ width: 15, height: 15 }} />
               </div>
@@ -234,7 +228,7 @@ export function Sidebar({ isOpen, toggleSidebar }) {
                   style={{
                     fontSize: '0.66rem',
                     fontFamily: 'var(--font-serif)',
-                    color: currentUser ? '#525252' : '#E5E5E0',
+                    color: isLoggedIn ? '#525252' : '#E5E5E0',
                     lineHeight: 1.4,
                     marginTop: '0.15rem',
                     wordBreak: 'break-word',
@@ -244,17 +238,28 @@ export function Sidebar({ isOpen, toggleSidebar }) {
                 </p>
               </div>
             </div>
-            <p
-              style={{
-                fontSize: '0.62rem',
-                fontFamily: 'var(--font-mono)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.14em',
-                color: currentUser ? '#737373' : '#E5E5E0',
-              }}
-            >
-              {currentUser ? 'Signed in' : 'Guest mode'}
-            </p>
+            <div className="flex items-center justify-between">
+              <p
+                style={{
+                  fontSize: '0.62rem',
+                  fontFamily: 'var(--font-mono)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.14em',
+                  color: isLoggedIn ? '#737373' : '#E5E5E0',
+                }}
+              >
+                {isLoggedIn ? 'Signed in' : 'Guest mode'}
+              </p>
+              {isLoggedIn && role && (
+                <span className="role-badge" style={{
+                  background: role === 'author' ? '#111111' : '#E5E5E0',
+                  color: role === 'author' ? '#F9F9F7' : '#525252',
+                  border: '1px solid #111111',
+                }}>
+                  {role === 'author' ? '✒ Author' : '◎ Admirer'}
+                </span>
+              )}
+            </div>
           </div>
 
           <Link
@@ -265,9 +270,23 @@ export function Sidebar({ isOpen, toggleSidebar }) {
           >
             <Settings style={{ width: 14, height: 14, color: '#111111' }} />
             <span style={{ fontSize: '0.76rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>
-              {currentUser ? 'Account Settings' : 'Sign In'}
+              {isLoggedIn ? 'Account Settings' : 'Sign In'}
             </span>
           </Link>
+
+          {isLoggedIn && (
+            <button
+              type="button"
+              onClick={() => { if (isOpen) toggleSidebar(); logout(); }}
+              className="mt-2 flex w-full items-center gap-2.5 px-3 py-2.5 transition-colors"
+              style={{ color: '#CC0000', border: '1px solid #CC0000', background: 'transparent', cursor: 'pointer' }}
+            >
+              <LogOut style={{ width: 14, height: 14 }} />
+              <span style={{ fontSize: '0.76rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.14em' }}>
+                Sign Out
+              </span>
+            </button>
+          )}
         </div>
       </aside>
     </>

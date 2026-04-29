@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Edit3, Menu, Search, X } from 'lucide-react';
+import { Edit3, LogOut, Menu, Search, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import brandLogo from '../../assets/hero.png';
+import { useAuth } from '../../lib/useAuth';
+import { NotificationBell } from '../NotificationBell';
 
 const NAV_LINKS = [
   { label: 'Discover', path: '/explore' },
@@ -9,13 +11,35 @@ const NAV_LINKS = [
   { label: 'Saved', path: '/bookmarks' },
 ];
 
+function RolePill({ role }) {
+  if (!role) return null;
+  const isAuthor = role === 'author';
+  return (
+    <span
+      className="hidden md:inline-flex items-center gap-1 px-2 py-1 font-mono text-[0.62rem] uppercase tracking-[0.14em]"
+      style={{
+        border: '1px solid #111111',
+        background: isAuthor ? '#111111' : '#F5F5F2',
+        color: isAuthor ? '#F9F9F7' : '#525252',
+      }}
+    >
+      {isAuthor ? '✒' : '◎'} {isAuthor ? 'Author' : 'Admirer'}
+    </span>
+  );
+}
+
 export function Navbar({ toggleSidebar }) {
   const [searchValue, setSearchValue] = useState('');
   const location = useLocation();
+  const { user, isLoggedIn, role, logout } = useAuth();
+
+  const displayName =
+    user?.display_name || user?.email?.split('@')[0] || '';
 
   return (
     <nav className="navbar-soft border-b border-[#111111] px-4 py-3 md:px-6">
       <div className="mx-auto flex max-w-screen-xl items-center gap-4">
+        {/* Hamburger (mobile) */}
         <button
           type="button"
           onClick={toggleSidebar}
@@ -25,6 +49,7 @@ export function Navbar({ toggleSidebar }) {
           <Menu className="h-5 w-5" strokeWidth={1.5} />
         </button>
 
+        {/* Brand */}
         <Link to="/" className="group flex items-center gap-3 no-underline">
           <span className="flex h-11 w-11 items-center justify-center border border-[#111111] bg-[#F5F5F2]">
             <img src={brandLogo} alt="Bloggonut" className="h-full w-full object-contain p-1 grayscale" />
@@ -37,6 +62,7 @@ export function Navbar({ toggleSidebar }) {
           </div>
         </Link>
 
+        {/* Center nav links */}
         <div className="hidden flex-1 items-center justify-center gap-8 lg:flex">
           {NAV_LINKS.map((link) => (
             <Link
@@ -49,6 +75,7 @@ export function Navbar({ toggleSidebar }) {
           ))}
         </div>
 
+        {/* Search */}
         <div className="hidden max-w-sm flex-1 md:block">
           <div className="search-wrap">
             <div className="relative">
@@ -74,14 +101,45 @@ export function Navbar({ toggleSidebar }) {
           </div>
         </div>
 
+        {/* Right side */}
         <div className="ml-auto flex items-center gap-3">
           <Link to="/write" className="nav-link hidden md:inline-flex">
             <Edit3 className="h-4 w-4" strokeWidth={1.5} />
             Write
           </Link>
-          <Link to="/auth" className="btn-primary">
-            Sign in
-          </Link>
+
+          {isLoggedIn ? (
+            <>
+              {/* Role pill */}
+              <RolePill role={role} />
+
+              {/* Notification bell */}
+              <NotificationBell />
+
+              {/* User chip + logout */}
+              <div className="hidden md:flex items-center gap-2">
+                <span
+                  className="font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#525252] max-w-[120px] truncate"
+                  title={displayName}
+                >
+                  {displayName}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={logout}
+                className="inline-flex h-9 w-9 items-center justify-center border border-[#111111] text-[#111111] transition-all hover:bg-[#CC0000] hover:border-[#CC0000] hover:text-white"
+                title="Sign out"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4" strokeWidth={1.5} />
+              </button>
+            </>
+          ) : (
+            <Link to="/auth" className="btn-primary">
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
     </nav>

@@ -27,6 +27,7 @@ function App() {
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/posts/:id" element={<PostDetail />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/login" element={<Auth />} />
           <Route path="/write" element={<CreatePost />} />
           <Route path="/edit/:id" element={<EditPost />} />
 

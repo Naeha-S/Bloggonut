@@ -42,7 +42,7 @@ const TOPIC_LOOKUP = TOPICS.reduce((accumulator, topic) => {
   return accumulator;
 }, {});
 
-export const topicSlug = (value = '') => value.toString().trim().toLowerCase().replace(/\s+/g, '-');
+export const topicSlug = (value) => (value || '').toString().trim().toLowerCase().replace(/\s+/g, '-');
 
 export const topicLabel = (value = '') => {
   const slug = topicSlug(value);

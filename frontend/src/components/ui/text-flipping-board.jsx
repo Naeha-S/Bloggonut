@@ -100,7 +100,8 @@ const FlapCell = React.memo(
       startTimer.current = null;
       stepTimer.current = null;
 
-      const normalized = FLAP_CHARS.includes(target.toUpperCase()) ? target.toUpperCase() : " ";
+      const safeTarget = (target || " ").toString();
+      const normalized = FLAP_CHARS.includes(safeTarget.toUpperCase()) ? safeTarget.toUpperCase() : " ";
       if (normalized === tgtRef.current) return undefined;
       tgtRef.current = normalized;
 
@@ -315,7 +316,9 @@ function wrapParagraph(paragraph, maxCols) {
 }
 
 function wrapText(input, maxCols) {
+  if (!input) return [];
   return input
+    .toString()
     .split("\n")
     .flatMap((paragraph) => (paragraph.trim() === "" ? [""] : wrapParagraph(paragraph, maxCols)));
 }

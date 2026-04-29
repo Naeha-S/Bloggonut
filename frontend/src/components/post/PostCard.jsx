@@ -6,9 +6,16 @@ import { topicSlug } from '../../data/topics';
 
 const MotionLink = motion(Link);
 
-function formatDate(dateStr) {
-  if (!dateStr) return 'Undated';
-  return new Date(dateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+function formatDate(dateStr, fallbackStr) {
+  const d = dateStr || fallbackStr;
+  if (!d) return 'Undated';
+  try {
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return 'Undated';
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  } catch {
+    return 'Undated';
+  }
 }
 
 function AuthorMeta({ post }) {
@@ -20,7 +27,7 @@ function AuthorMeta({ post }) {
       </div>
       <div className="px-4 py-3">
         <p className="font-mono text-[0.64rem] uppercase tracking-[0.18em] text-[#737373]">Filed</p>
-        <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-[#111111]">{formatDate(post.date)}</p>
+        <p className="mt-2 font-mono text-xs uppercase tracking-[0.14em] text-[#111111]">{formatDate(post.date, post.created_at)}</p>
       </div>
     </div>
   );
@@ -199,7 +206,7 @@ function CompactCard({ post, index, rank }) {
         </button>
         <p className="mt-2 font-display text-xl leading-tight text-[#111111]">{post.title}</p>
         <p className="mt-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-[#737373]">
-          {post.author || 'Staff Writer'} | {formatDate(post.date)}
+          {post.author || 'Staff Writer'} | {formatDate(post.date, post.created_at)}
         </p>
       </div>
     </MotionLink>

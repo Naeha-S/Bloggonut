@@ -75,13 +75,15 @@ export function Trending() {
                 Trending is the right surface for a live mechanical board and a quick navigation dock. It reads like a newsroom control strip instead of a landing-page gimmick.
               </p>
             </div>
-            <div className="border-b border-[#111111] px-3 py-5 lg:col-span-8 lg:border-b-0 md:px-5">
-              <TextFlippingBoard
-                text={boardMessages[boardIndex]}
-                theme="newsprint"
-                className="max-w-none border-0 bg-transparent p-0 shadow-none"
-                duration={1.25}
-              />
+            <div className="border-b border-[#111111] px-3 py-5 lg:col-span-8 lg:border-b-0 md:px-5 overflow-x-auto">
+              <div className="min-w-[600px] lg:min-w-0">
+                <TextFlippingBoard
+                  text={boardMessages[boardIndex]}
+                  theme="newsprint"
+                  className="max-w-none border-0 bg-transparent p-0 shadow-none"
+                  duration={1.25}
+                />
+              </div>
             </div>
           </div>
         </section>

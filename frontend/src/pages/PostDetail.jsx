@@ -199,7 +199,7 @@ export function PostDetail() {
           </div>
         </section>
 
-        <CommentsSection postId={post.id} />
+        <CommentsSection postId={post.id} postAuthorId={post.author_id} />
       </article>
     </>
   );
