@@ -240,7 +240,15 @@ const DUMMY_POST_BLUEPRINTS = [
 
 const DUMMY_POSTS = DUMMY_POST_BLUEPRINTS.map((post, index) => ({
   id: index + 1,
-  content: 'Long content here...',
+  content: [
+    `${post.description}`,
+    '',
+    `${post.title} is one of the placeholder front-page stories used while the database is still mixed with seeded content. This article body is intentionally longer so the post detail page reads like a real story instead of feeling like an image-only view.`,
+    '',
+    `The current build uses topic-specific imagery, editorial metadata, and a full article layout. When you open this post, the body below the hero image should now contain enough text to confirm that the detail route is rendering correctly.`,
+    '',
+    `Once you replace these seeded records with authored posts from the backend, this placeholder copy will naturally disappear in favor of real content.`,
+  ].join('\n'),
   date: new Date(Date.now() - index * 12 * 60 * 60 * 1000).toISOString(),
   image: TOPIC_IMAGES[post.category],
   ...post,

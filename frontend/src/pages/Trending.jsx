@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Flame } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PostCard } from '../components/post/PostCard';
+import { TextFlippingBoard } from '../components/ui/text-flipping-board';
 
 const container = {
   hidden: { opacity: 0 },
@@ -18,6 +19,7 @@ export function Trending() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [boardIndex, setBoardIndex] = useState(0);
 
   useEffect(() => {
     fetch('http://localhost:5000/api/posts')
@@ -32,6 +34,22 @@ export function Trending() {
 
   const [hero, ...rest] = posts;
   const topThree = posts.slice(0, 3);
+  const boardMessages = useMemo(() => {
+    const totalLikes = posts.reduce((sum, post) => sum + Number(post.likes || 0), 0);
+    return [
+      'TRENDING DESK\nRANKED BY LIKES',
+      `${posts.length} STORIES TRACKED\n${totalLikes} TOTAL LIKES`,
+      'THE TOP READS\nARE MOVING FAST',
+    ];
+  }, [posts]);
+
+  useEffect(() => {
+    if (boardMessages.length <= 1) return undefined;
+    const id = setInterval(() => {
+      setBoardIndex((index) => (index + 1) % boardMessages.length);
+    }, 5000);
+    return () => clearInterval(id);
+  }, [boardMessages]);
 
   return (
     <div>
@@ -44,6 +62,30 @@ export function Trending() {
         <h1 className="newsprint-title">What readers are pulling to the top.</h1>
         <p className="newsprint-dek">The stories with the strongest engagement across the edition right now.</p>
       </header>
+
+      {!loading && !error && posts.length > 0 ? (
+        <section className="mb-8 border border-[#111111] bg-[#F9F9F7]">
+          <div className="grid grid-cols-1 lg:grid-cols-12">
+            <div className="border-b border-[#111111] px-5 py-6 lg:col-span-4 lg:border-b-0 lg:border-r lg:border-[#111111]">
+              <p className="font-mono text-[0.68rem] uppercase tracking-[0.18em] text-[#737373]">Signal board</p>
+              <h2 className="mt-4 font-display text-5xl leading-[0.92] tracking-tight text-[#111111]">
+                The board now lives where momentum matters.
+              </h2>
+              <p className="mt-4 font-serif text-sm leading-relaxed text-[#525252]">
+                Trending is the right surface for a live mechanical board and a quick navigation dock. It reads like a newsroom control strip instead of a landing-page gimmick.
+              </p>
+            </div>
+            <div className="border-b border-[#111111] px-3 py-5 lg:col-span-8 lg:border-b-0 md:px-5">
+              <TextFlippingBoard
+                text={boardMessages[boardIndex]}
+                theme="newsprint"
+                className="max-w-none border-0 bg-transparent p-0 shadow-none"
+                duration={1.25}
+              />
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {topThree.length > 0 ? (
         <section className="mb-8 border border-[#111111]">

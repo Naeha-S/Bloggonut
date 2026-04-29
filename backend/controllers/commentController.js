@@ -6,29 +6,50 @@ const CommentSchema = z.object({
   post_id: z.string().uuid('Invalid post ID'),
 });
 
+const isUuid = (value = '') =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
 export const getCommentsForPost = async (req, res) => {
   try {
     const { postId } = req.params;
+    console.log(`[comments:getCommentsForPost] fetching for postId: ${postId}`);
+
+    if (!postId || !isUuid(postId)) {
+      console.log(`[comments:getCommentsForPost] skipping invalid UUID: ${postId}`);
+      return res.status(200).json([]);
+    }
+
     const { data, error } = await supabase
       .from('comments')
       .select('*')
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
 
-    if (error && error.code === '42P01') {
-      return res.status(200).json([]);
+    if (error) {
+      // Handle Postgres error codes for invalid UUIDs just in case
+      if (error.code === '22P02' || error.code === '42P01') {
+        console.log(`[comments:getCommentsForPost] handled error code ${error.code}, returning []`);
+        return res.status(200).json([]);
+      }
+      throw error;
     }
 
-    if (error) throw error;
     res.status(200).json(data || []);
   } catch (err) {
+    console.error(`[comments:getCommentsForPost] error:`, err.message);
     res.status(500).json({ error: err.message });
   }
 };
 
+
 export const createComment = async (req, res) => {
   try {
     const { postId } = req.params;
+
+    if (!isUuid(postId)) {
+      return res.status(400).json({ error: 'Comments are only available for saved posts right now.' });
+    }
+
     const validatedData = CommentSchema.parse({ ...req.body, post_id: postId });
     const user = req.user;
 
