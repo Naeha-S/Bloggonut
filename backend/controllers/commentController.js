@@ -65,7 +65,7 @@ export const createComment = async (req, res) => {
     res.status(201).json({ message: 'Comment added', data: data[0] });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: err.errors[0].message });
+      return res.status(400).json({ error: err.issues[0].message });
     }
     res.status(500).json({ error: err.message });
   }

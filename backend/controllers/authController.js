@@ -19,7 +19,7 @@ export const signup = async (req, res) => {
     res.status(201).json({ message: 'User created successfully', data });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: err.errors[0].message });
+      return res.status(400).json({ error: err.issues[0].message });
     }
     res.status(400).json({ error: err.message });
   }
@@ -43,7 +43,7 @@ export const login = async (req, res) => {
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: err.errors[0].message });
+      return res.status(400).json({ error: err.issues[0].message });
     }
     res.status(401).json({ error: err.message });
   }
