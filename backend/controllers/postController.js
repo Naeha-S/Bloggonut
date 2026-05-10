@@ -366,7 +366,7 @@ export const createPost = async (req, res) => {
     res.status(201).json({ message: 'Post created', data });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: err.errors[0].message });
+      return res.status(400).json({ error: err.issues[0].message });
     }
     res.status(500).json({ error: err.message });
   }
@@ -390,7 +390,7 @@ export const updatePost = async (req, res) => {
     res.status(200).json({ message: 'Post updated', data });
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return res.status(400).json({ error: err.errors[0].message });
+      return res.status(400).json({ error: err.issues[0].message });
     }
     res.status(500).json({ error: err.message });
   }
